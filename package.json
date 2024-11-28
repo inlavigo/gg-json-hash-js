@@ -4,7 +4,7 @@
   "main": "dist/gg-json-hash.js",
   "types": "dist/gg-json-hash.d.ts",
   "scripts": {
-    "test": "vitest"
+    "test": "vitest --run"
   },
   "type": "module",
   "keywords": [],
