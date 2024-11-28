@@ -1,0 +1,12 @@
+{
+  "name": "gg_json_hash_js",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Dr. Gabriel Gatzsche",
+  "license": "MIT",
+  "description": "Hashes JSON objects deeply. Good or JSON comparison, sync and more."
+}
