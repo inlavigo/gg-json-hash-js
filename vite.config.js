@@ -7,7 +7,13 @@ export default defineConfig({
     environment: 'jsdom', // Standardumgebung für Tests
     exclude: [...configDefaults.exclude], // Tests ausschließen (optional)
     coverage: {
-      provider: 'istanbul', // c8 Oder 'istanbul', wenn du Coverage möchtest
+      provider: 'v8', // v8, c8 Oder 'istanbul', wenn du Coverage möchtest
+      threshold: {
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      },
     },
   },
 });

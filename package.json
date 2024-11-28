@@ -17,6 +17,8 @@
     "@types/commander": "^2.12.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.1",
+    "@vitest/coverage-istanbul": "^2.1.6",
+    "@vitest/coverage-v8": "^2.1.6",
     "eslint": "^9.15.0",
     "eslint-plugin-jest": "^28.9.0",
     "eslint-plugin-jsdoc": "^50.6.0",
