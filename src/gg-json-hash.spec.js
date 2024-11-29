@@ -389,6 +389,7 @@ describe('JsonHash', () => {
       });
 
       it('does not add additional commas', () => {
+        expect(truncate(1.000001, 0)).toEqual(1);
         expect(truncate(1.0, 0)).toEqual(1);
         expect(truncate(1.0, 1)).toEqual(1.0);
         expect(truncate(1.0, 2)).toEqual(1.0);
@@ -429,6 +430,36 @@ describe('JsonHash', () => {
         expect(message).toEqual('Error: Unsupported type: object');
       });
     });
+
+    describe('_convertBasicType(string)', () => {
+      const _convertBasicType = JsonHash.privateMethods._convertBasicType;
+      it('with a string', () => {
+        expect(_convertBasicType('hello', 5)).toEqual('hello');
+      });
+
+      it('with an int', () => {
+        expect(_convertBasicType(10, 5)).toEqual(10);
+      });
+
+      it('with an double', () => {
+        expect(_convertBasicType(10.000000001, 5)).toEqual(10);
+      });
+
+      it('with a double', () => {
+        expect(_convertBasicType(true, 5)).toEqual(true);
+      });
+
+      it('with an non basic type', () => {
+        let message = '';
+        try {
+          _convertBasicType(new Set(), 5);
+        } catch (/** @type any */ e) {
+          message = e.toString();
+        }
+
+        expect(message).toEqual('Error: Unsupported type: object');
+      });
+    });
   });
 
   describe('applyToString()', () => {
@@ -438,6 +469,449 @@ describe('JsonHash', () => {
       expect(jsonString).toEqual(
         '{"key":"value","_hash":"5Dq88zdSRIOcAS-WM_lYYt"}',
       );
+    });
+  });
+
+  describe('with updateExistingHashes', () => {
+    /** @type Record<string, any> */
+    let json;
+
+    beforeEach(() => {
+      json = {
+        a: {
+          _hash: 'hash_a',
+          b: {
+            _hash: 'hash_b',
+            c: {
+              _hash: 'hash_c',
+              d: 'value',
+            },
+          },
+        },
+      };
+    });
+
+    const allHashesChanged = () => {
+      return (
+        json['a']['_hash'] !== 'hash_a' &&
+        json['a']['b']['_hash'] !== 'hash_b' &&
+        json['a']['b']['c']['_hash'] !== 'hash_c'
+      );
+    };
+
+    const noHashesChanged = () => {
+      return (
+        json['a']['_hash'] === 'hash_a' &&
+        json['a']['b']['_hash'] === 'hash_b' &&
+        json['a']['b']['c']['_hash'] === 'hash_c'
+      );
+    };
+
+    const changedHashes = () => {
+      const result = [];
+      if (json['a']['_hash'] !== 'hash_a') {
+        result.push('a');
+      }
+
+      if (json['a']['b']['_hash'] !== 'hash_b') {
+        result.push('b');
+      }
+
+      if (json['a']['b']['c']['_hash'] !== 'hash_c') {
+        result.push('c');
+      }
+
+      return result;
+    };
+
+    describe('true', () => {
+      it('should recalculate existing hashes', () => {
+        addHashes(json, { updateExistingHashes: true, inPlace: true });
+        expect(allHashesChanged()).toBe(true);
+      });
+    });
+
+    describe('false', () => {
+      describe('should not recalculate existing hashes', () => {
+        it('with all objects having hashes', () => {
+          addHashes(json, { updateExistingHashes: false, inPlace: true });
+          expect(noHashesChanged()).toBe(true);
+        });
+
+        it('with parents have no hashes', () => {
+          delete json['a']['_hash'];
+          addHashes(json, { updateExistingHashes: false, inPlace: true });
+          expect(changedHashes()).toEqual(['a']);
+
+          delete json['a']['_hash'];
+          delete json['a']['b']['_hash'];
+          addHashes(json, { updateExistingHashes: false, inPlace: true });
+          expect(changedHashes()).toEqual(['a', 'b']);
+        });
+      });
+    });
+  });
+
+  describe('with inPlace', () => {
+    describe('false', () => {
+      it('does not touch the original object', () => {
+        const json = {
+          key: 'value',
+        };
+
+        const hashedJson = addHashes(json, { inPlace: false });
+        expect(hashedJson).toEqual({
+          key: 'value',
+          _hash: '5Dq88zdSRIOcAS-WM_lYYt',
+        });
+
+        expect(json).toEqual({
+          key: 'value',
+        });
+      });
+    });
+
+    describe('true', () => {
+      it('writes hashes into original json', () => {
+        const json = {
+          key: 'value',
+        };
+
+        const hashedJson = addHashes(json, { inPlace: true });
+        expect(hashedJson).toEqual({
+          key: 'value',
+          _hash: '5Dq88zdSRIOcAS-WM_lYYt',
+        });
+
+        expect(json).toEqual(hashedJson);
+      });
+    });
+  });
+
+  describe('with recursive', () => {
+    let json = {
+      a: {
+        _hash: 'hash_a',
+        b: {
+          _hash: 'hash_b',
+        },
+      },
+      b: {
+        _hash: 'hash_a',
+        b: {
+          _hash: 'hash_b',
+        },
+      },
+      _hash: 'hash_0',
+    };
+
+    describe('true', () => {
+      it('should recalculate deeply all hashes', () => {
+        const result = addHashes(json, { recursive: true });
+
+        expect(result['_hash']).not.toBe('hash_0');
+        expect(result['a']['_hash']).not.toBe('hash_a');
+        expect(result['a']['b']['_hash']).not.toBe('hash_b');
+      });
+    });
+
+    describe('false', () => {
+      it('should only calc the first hash', () => {
+        const result = addHashes(json, { recursive: false });
+
+        expect(result['_hash']).not.toBe('hash_0');
+        expect(result['a']['_hash']).toBe('hash_a');
+        expect(result['a']['b']['_hash']).toBe('hash_b');
+      });
+    });
+
+    describe('validate', () => {
+      describe('with an empty json', () => {
+        describe('throws', () => {
+          it('when no hash is given', () => {
+            let message;
+
+            try {
+              jh.validate({});
+            } catch (/** @type any */ e) {
+              message = e.toString();
+            }
+
+            expect(message).toBe('Error: Hash is missing.');
+          });
+
+          it('when hash is wrong', () => {
+            let message;
+
+            try {
+              jh.validate({
+                _hash: 'wrongHash',
+              });
+            } catch (/** @type any */ e) {
+              message = e.toString();
+            }
+
+            expect(message).toBe(
+              'Error: Hash "wrongHash" is wrong. Should be "RBNvo1WzZ4oRRq0W9-hknp".',
+            );
+          });
+        });
+
+        describe('does not throw', () => {
+          it('when hash is correct', () => {
+            expect(() =>
+              jh.validate({
+                _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
+              }),
+            ).not.toThrow();
+          });
+        });
+      });
+
+      describe('with a single level json', () => {
+        describe('throws', () => {
+          it('when no hash is given', () => {
+            let message;
+
+            try {
+              jh.validate({ key: 'value' });
+            } catch (/** @type any */ e) {
+              message = e.toString();
+            }
+
+            expect(message).toBe('Error: Hash is missing.');
+          });
+
+          it('when hash is wrong', () => {
+            let message;
+
+            try {
+              jh.validate({
+                key: 'value',
+                _hash: 'wrongHash',
+              });
+            } catch (/** @type any */ e) {
+              message = e.toString();
+            }
+
+            expect(message).toBe(
+              'Error: Hash "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+            );
+          });
+        });
+
+        describe('does not throw', () => {
+          it('when hash is correct', () => {
+            expect(() =>
+              jh.validate({
+                key: 'value',
+                _hash: '5Dq88zdSRIOcAS-WM_lYYt',
+              }),
+            ).not.toThrow();
+          });
+        });
+      });
+
+      describe('with a deeply nested json', () => {
+        /** @type {Record<string, any>} */
+        let json2;
+
+        beforeEach(() => {
+          json2 = {
+            _hash: 'oEE88mHZ241BRlAfyG8n9X',
+            parent: {
+              _hash: '3Wizz29YgTIc1LRaN9fNfK',
+              child: {
+                key: 'value',
+                _hash: '5Dq88zdSRIOcAS-WM_lYYt',
+              },
+            },
+          };
+        });
+
+        describe('throws', () => {
+          describe('when no hash is given', () => {
+            it('at the root', () => {
+              let message;
+              delete json2['_hash'];
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe('Error: Hash is missing.');
+            });
+
+            it('at the parent', () => {
+              let message;
+              delete json2['parent']['_hash'];
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe('Error: Hash at /parent is missing.');
+            });
+
+            it('at the child', () => {
+              let message;
+              delete json2['parent']['child']['_hash'];
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe('Error: Hash at /parent/child is missing.');
+            });
+          });
+
+          describe('when hash is wrong', () => {
+            it('at the root', () => {
+              let message;
+              json2['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash "wrongHash" is wrong. Should be "oEE88mHZ241BRlAfyG8n9X".',
+              );
+            });
+
+            it('at the parent', () => {
+              let message;
+              json2['parent']['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash at /parent "wrongHash" is wrong. Should be "3Wizz29YgTIc1LRaN9fNfK".',
+              );
+            });
+
+            it('at the child', () => {
+              let message;
+              json2['parent']['child']['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash at /parent/child "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+              );
+            });
+          });
+
+          describe('not', () => {
+            it('when hash is correct', () => {
+              expect(() => jh.validate(json2)).not.toThrow();
+            });
+          });
+        });
+      });
+
+      describe('with a deeply nested json with child array', () => {
+        /** @type {Record<string, any>} */
+        let json2;
+
+        beforeEach(() => {
+          json2 = {
+            _hash: 'IoJ_C8gm8uVu8ExpS7ZNPY',
+            parent: [
+              {
+                _hash: 'kDsVfUjnkXU7_KXqp-PuyA',
+                child: [{ key: 'value', _hash: '5Dq88zdSRIOcAS-WM_lYYt' }],
+              },
+            ],
+          };
+        });
+
+        describe('throws', () => {
+          describe('when no hash is given', () => {
+            it('at the parent', () => {
+              let message;
+              delete json2['parent'][0]['_hash'];
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe('Error: Hash at /parent/0 is missing.');
+            });
+
+            it('at the child', () => {
+              let message;
+              delete json2['parent'][0]['child'][0]['_hash'];
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash at /parent/0/child/0 is missing.',
+              );
+            });
+          });
+
+          describe('when hash is wrong', () => {
+            it('at the parent', () => {
+              let message;
+              json2['parent'][0]['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash at /parent/0 "wrongHash" is wrong. Should be "kDsVfUjnkXU7_KXqp-PuyA".',
+              );
+            });
+
+            it('at the child', () => {
+              let message;
+              json2['parent'][0]['child'][0]['_hash'] = 'wrongHash';
+
+              try {
+                jh.validate(json2);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toBe(
+                'Error: Hash at /parent/0/child/0 "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+              );
+            });
+          });
+
+          describe('not', () => {
+            it('when hash is correct', () => {
+              expect(() => jh.validate(json2)).not.toThrow();
+            });
+          });
+        });
+      });
     });
   });
 });

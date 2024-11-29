@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8', // v8, c8 Oder 'istanbul', wenn du Coverage möchtest
-
+      exclude: [...configDefaults.coverage.exclude, 'examples/**'], // Exclude the "examples" folder from coverage
       thresholds: {
         statements: 100,
         branches: 100,

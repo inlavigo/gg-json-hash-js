@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "Dr. Gabriel Gatzsche",
   "license": "MIT",
-  "description": "Hashes JSON objects deeply. Good or JSON comparison, sync and more.",
+  "description": "Add hashes to nested json objects.",
   "repository": {
     "type": "git",
     "url": "https://github.com/inlavigo/gg-json-hash-js.git"
@@ -34,5 +34,9 @@
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0",
     "vitest": "^2.1.6"
+  },
+  "dependencies": {
+    "js-sha256": "^0.11.0",
+    "base64-js": "^1.5.1"
   }
 }

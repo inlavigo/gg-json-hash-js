@@ -4,7 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { createHash } from 'crypto';
+import { fromByteArray } from 'base64-js';
+import { sha256 } from 'js-sha256';
 
 /**
  * Deeply hashes a JSON object.
@@ -46,12 +47,14 @@ export class JsonHash {
    * @param {boolean} [options.updateExistingHashes=true] - Whether to update existing hashes.
    * @param {boolean} [options.recursive=true] - Whether to hash recursively.
    */
-  constructor({
-    hashLength = 22,
-    floatingPointPrecision = 10,
-    updateExistingHashes = true,
-    recursive = true,
-  }) {
+  constructor(options = {}) {
+    const {
+      hashLength = 22,
+      floatingPointPrecision = 10,
+      updateExistingHashes = true,
+      recursive = true,
+    } = options;
+
     this.updateExistingHashes = updateExistingHashes;
     this.hashLength = hashLength;
     this.floatingPointPrecision = floatingPointPrecision;
@@ -88,8 +91,12 @@ export class JsonHash {
    * @returns {string} The calculated hash.
    */
   calcHash(string) {
-    const hash = createHash('sha256').update(string).digest('base64url');
-    return hash.substring(0, this.hashLength);
+    const hash = sha256.arrayBuffer(string);
+    const bytes = new Uint8Array(hash);
+    const base64 = fromByteArray(bytes).substring(0, this.hashLength);
+
+    // convert to url save base64
+    return base64.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
   }
 
   // ...........................................................................
@@ -97,10 +104,10 @@ export class JsonHash {
    * Throws if hashes are not correct.
    * @param {Record<string, any>} json - The JSON object to validate.
    */
-  static validate(json) {
+  validate(json) {
     // Check the hash of the high level element
     const jsonWithCorrectHashes = addHashes(json);
-    JsonHash._validate(json, jsonWithCorrectHashes, '');
+    this._validate(json, jsonWithCorrectHashes, '');
   }
 
   // ######################
@@ -114,7 +121,7 @@ export class JsonHash {
    * @param {Record<string, any>} jsonShould - The JSON object with correct hashes.
    * @param {string} path - The current path in the JSON object.
    */
-  static _validate(jsonIs, jsonShould, path) {
+  _validate(jsonIs, jsonShould, path) {
     // Check the hashes of the parent element
     const expectedHash = jsonShould['_hash'];
     const actualHash = jsonIs['_hash'];
@@ -137,13 +144,13 @@ export class JsonHash {
       if (typeof value === 'object' && !Array.isArray(value)) {
         const childIs = value;
         const childShould = jsonShould[key];
-        JsonHash._validate(childIs, childShould, `${path}/${key}`);
+        this._validate(childIs, childShould, `${path}/${key}`);
       } else if (Array.isArray(value)) {
         for (let i = 0; i < value.length; i++) {
           if (typeof value[i] === 'object' && !Array.isArray(value[i])) {
             const itemIs = value[i];
             const itemShould = jsonShould[key][i];
-            JsonHash._validate(itemIs, itemShould, `${path}/${key}/${i}`);
+            this._validate(itemIs, itemShould, `${path}/${key}/${i}`);
           }
         }
       }
@@ -169,7 +176,7 @@ export class JsonHash {
       if (typeof value === 'object' && !Array.isArray(value)) {
         const existingHash = value['_hash'];
         if (existingHash != null && !recursive) {
-          return;
+          continue;
         }
         this._addHashesToObject(value, recursive);
       } else if (Array.isArray(value)) {
@@ -193,8 +200,6 @@ export class JsonHash {
           value,
           this.floatingPointPrecision,
         );
-      } else {
-        throw new Error(`Unsupported type: ${typeof value}`);
       }
     }
 
@@ -386,8 +391,6 @@ export class JsonHash {
         return `"${value.replace(/"/g, '\\"')}"`; // Escape quotes
       } else if (typeof value === 'number' || typeof value === 'boolean') {
         return value.toString();
-      } else if (value === null) {
-        return 'null';
       } else if (Array.isArray(value)) {
         return `[${value.map(encodeValue).join(',')}]`;
       } else if (value.constructor === Object) {
@@ -414,6 +417,7 @@ export class JsonHash {
       _isBasicType: JsonHash._isBasicType,
       _truncate: JsonHash._truncate,
       _jsonString: JsonHash._jsonString,
+      _convertBasicType: JsonHash._convertBasicType,
     };
   }
 }
