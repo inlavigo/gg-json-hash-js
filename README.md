@@ -3,7 +3,7 @@
 `gg-json-hash` is a lightweight npm package designed to traverse JSON data
 structures and add unique hash identifiers to all objects within them.
 
-![teaser.webp](teaser.webp)
+![teaser.webp](https://github.com/inlavigo/gg-json-hash-js/raw/main/teaser.webp)
 
 ## Motivation
 
