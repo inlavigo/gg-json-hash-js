@@ -4,6 +4,6 @@ import { ggJsonHash } from './gg-json-hash.js';
 describe('ggJsonHash', () => {
   it('should log the correct message to the console', () => {
     ggJsonHash('test');
-    // ggJsonHash('10');
+    ggJsonHash('10');
   });
 });
