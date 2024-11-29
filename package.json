@@ -11,6 +11,10 @@
   "author": "Dr. Gabriel Gatzsche",
   "license": "MIT",
   "description": "Hashes JSON objects deeply. Good or JSON comparison, sync and more.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inlavigo/gg-json-hash-js.git"
+  },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
     "@jest/globals": "^29.7.0",
