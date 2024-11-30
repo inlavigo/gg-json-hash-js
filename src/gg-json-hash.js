@@ -7,84 +7,149 @@
 import { fromByteArray } from 'base64-js';
 import { sha256 } from 'js-sha256';
 
+// .............................................................................
 /**
- * Deeply hashes a JSON object.
- * @param {Record<string, any>} json - The JSON object to hash.
- * @param {object} options - Options for hashing.
- * @param {boolean} [options.updateExistingHashes=true] - Whether to update existing hashes.
- * @param {number} [options.floatingPointPrecision=10] - Precision for floating point numbers.
- * @param {number} [options.hashLength=22] - Length of the hash.
- * @param {boolean} [options.inPlace=false] - Whether to modify the original object.
- * @param {boolean} [options.recursive=true] - Whether to hash recursively.
- * @returns {Record<string, any>} The JSON object with hashes added.
+ * Number config for hashing.
+ *
+ * We need to make sure that the hashing of numbers is consistent
+ * across different platforms. Especially rounding errors can lead to
+ * different hashes although the numbers are considered equal. This
+ * class provides a configuration for hashing numbers.
  */
-export function addHashes(json, options = {}) {
-  const {
-    updateExistingHashes = true,
-    floatingPointPrecision = 10,
-    hashLength = 22,
-    inPlace = false,
-    recursive = true,
-  } = options;
+export class NumberConfig {
+  precision = 0.001;
+  maxNum = 1000 * 1000 * 1000;
+  minNum = -this.maxNum;
+  throwOnRangeError = true;
 
-  return new JsonHash({
-    hashLength,
-    floatingPointPrecision,
-    updateExistingHashes,
-    recursive,
-  }).applyTo(json, { inPlace });
+  /**
+   * Default configuration.
+   *
+   * @type {NumberConfig}
+   */
+  static get default() {
+    return new NumberConfig();
+  }
 }
 
+// .............................................................................
+/**
+ * When writing hashes into a given JSON object, we have various options.
+ */
+export class ApplyConfig {
+  /**
+   * Constructor
+   * @param {boolean} [inPlace=false] - Whether to modify the JSON object in place.
+   * @param {boolean} [updateExistingHashes=true] - Whether to update existing hashes.
+   * @param {boolean} [throwOnHashMismatch=true] - Whether to throw an error if existing hashes are wrong.
+   */
+  constructor(inPlace, updateExistingHashes, throwOnHashMismatch) {
+    this.inPlace = inPlace ?? false;
+    this.updateExistingHashes = updateExistingHashes ?? true;
+    this.throwOnHashChanges = throwOnHashMismatch ?? true;
+  }
+
+  inPlace;
+  updateExistingHashes;
+  throwOnHashChanges;
+
+  /**
+   * Default configuration.
+   *
+   * @type {ApplyConfig}
+   */
+  static get default() {
+    return new ApplyConfig();
+  }
+}
+
+// .............................................................................
+/**
+ * Options for the JSON hash.
+ */
+export class HashConfig {
+  // ...........................................................................
+  /**
+   * Constructor
+   * @param {number} [hashLength=22] - Length of the hash.
+   * @param {string} [hashAlgorithm='SHA-256'] - Algorithm to use for hashing.
+   * @param {NumberConfig} [numberConfig=HashNumberConfig.default] - Configuration for hashing numbers.
+   */
+  constructor(hashLength, hashAlgorithm, numberConfig) {
+    this.hashLength = hashLength ?? 22;
+    this.hashAlgorithm = hashAlgorithm ?? 'SHA-256';
+    this.numberConfig = numberConfig ?? NumberConfig.default;
+  }
+
+  hashLength;
+  hashAlgorithm;
+  numberConfig;
+
+  /**
+   * Default configuration.
+   *
+   * @type {HashConfig}
+   */
+  static get default() {
+    return new HashConfig();
+  }
+}
+
+// .............................................................................
 /**
  * Adds hashes to JSON object.
  */
 export class JsonHash {
+  // ...........................................................................
   /**
    * Constructor
-   * @param {object} options - Options for the JsonHash.
-   * @param {number} [options.hashLength=22] - Length of the hash.
-   * @param {number} [options.floatingPointPrecision=10] - Precision for floating point numbers.
-   * @param {boolean} [options.updateExistingHashes=true] - Whether to update existing hashes.
-   * @param {boolean} [options.recursive=true] - Whether to hash recursively.
+   * @param {HashConfig} [config=HashConfig.default] - Configuration for the hash.
    */
-  constructor(options = {}) {
-    const {
-      hashLength = 22,
-      floatingPointPrecision = 10,
-      updateExistingHashes = true,
-      recursive = true,
-    } = options;
-
-    this.updateExistingHashes = updateExistingHashes;
-    this.hashLength = hashLength;
-    this.floatingPointPrecision = floatingPointPrecision;
-    this.recursive = recursive;
+  constructor(config) {
+    this.config = config ?? HashConfig.default;
   }
 
+  /** @type {HashConfig} */
+  config;
+
+  /**
+   * Default instance.
+   *
+   * @type {JsonHash}
+   */
+  static get default() {
+    return new JsonHash();
+  }
+
+  // ...........................................................................
   /**
    * Writes hashes into the JSON object.
    * @param {Record<string, any>} json - The JSON object to hash.
-   * @param {object} [options={}] - Options for the operation.
-   * @param {boolean} [options.inPlace=false] - Whether to modify the original object.
+   * @param {ApplyConfig} [applyConfig=HashApplyToConfig.default] - Options for the operation.
    * @returns {Record<string, any>} The JSON object with hashes added.
    */
-  applyTo(json, { inPlace = false } = {}) {
-    const copy = inPlace ? json : JsonHash._copyJson(json);
-    this._addHashesToObject(copy, this.recursive);
+  apply(json, applyConfig) {
+    applyConfig = applyConfig ?? ApplyConfig.default;
+    const copy = applyConfig.inPlace ? json : JsonHash._copyJson(json);
+    this._addHashesToObject(copy, applyConfig);
     return copy;
   }
 
+  // ...........................................................................
   /**
    * Writes hashes into a JSON string.
    * @param {string} jsonString - The JSON string to hash.
    * @returns {string} The JSON string with hashes added.
    */
-  applyToString(jsonString) {
+  applyToJsonString(jsonString) {
     const json = JSON.parse(jsonString);
-    const hashedJson = this.applyTo(json, { inPlace: true });
+    const applyConfig = ApplyConfig.default;
+    applyConfig.inPlace = true;
+    const hashedJson = this.apply(json, applyConfig);
     return JSON.stringify(hashedJson);
   }
 
+  // ...........................................................................
   /**
    * Calculates a SHA-256 hash of a string with base64 url.
    * @param {string} string - The string to hash.
@@ -93,7 +158,7 @@ export class JsonHash {
   calcHash(string) {
     const hash = sha256.arrayBuffer(string);
     const bytes = new Uint8Array(hash);
-    const base64 = fromByteArray(bytes).substring(0, this.hashLength);
+    const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
 
     // convert to url save base64
     return base64.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
@@ -106,7 +171,7 @@ export class JsonHash {
    */
   validate(json) {
     // Check the hash of the high level element
-    const jsonWithCorrectHashes = addHashes(json);
+    const jsonWithCorrectHashes = this.apply(json);
     this._validate(json, jsonWithCorrectHashes, '');
   }
 
@@ -161,13 +226,12 @@ export class JsonHash {
   /**
    * Recursively adds hashes to a nested object.
    * @param {Record<string, any>} obj - The object to add hashes to.
-   * @param {boolean} recursive - Whether to process recursively.
+   * @param {ApplyConfig} applyConfig - Whether to process recursively.
    */
-  _addHashesToObject(obj, recursive) {
-    if (
-      !this.updateExistingHashes &&
-      Object.prototype.hasOwnProperty.call(obj, '_hash')
-    ) {
+  _addHashesToObject(obj, applyConfig) {
+    const updateExisting = applyConfig.updateExistingHashes;
+
+    if (!updateExisting && Object.prototype.hasOwnProperty.call(obj, '_hash')) {
       return;
     }
 
@@ -175,12 +239,12 @@ export class JsonHash {
     for (const [, value] of Object.entries(obj)) {
       if (typeof value === 'object' && !Array.isArray(value)) {
         const existingHash = value['_hash'];
-        if (existingHash != null && !recursive) {
+        if (!updateExisting && existingHash != null) {
           continue;
         }
-        this._addHashesToObject(value, recursive);
+        this._addHashesToObject(value, applyConfig);
       } else if (Array.isArray(value)) {
-        this._processList(value);
+        this._processList(value, applyConfig);
       }
     }
 
@@ -196,10 +260,7 @@ export class JsonHash {
       } else if (Array.isArray(value)) {
         objToHash[key] = this._flattenList(value);
       } else if (JsonHash._isBasicType(value)) {
-        objToHash[key] = JsonHash._convertBasicType(
-          value,
-          this.floatingPointPrecision,
-        );
+        objToHash[key] = this._convertBasicType(value);
       }
     }
 
@@ -226,14 +287,14 @@ export class JsonHash {
    * Converts a basic type to a suitable representation.
    * @param {any} value - The value to convert.
    * @returns {any} The converted value.
-   * @param {number} floatingPointPrecision
    */
-  static _convertBasicType(value, floatingPointPrecision) {
+  _convertBasicType(value) {
     if (typeof value === 'string') {
       return value;
     }
     if (typeof value === 'number') {
-      return JsonHash._truncate(value, floatingPointPrecision);
+      this._checkNumber(value);
+      return value;
     } else if (typeof value === 'boolean') {
       return value;
     } else {
@@ -256,9 +317,7 @@ export class JsonHash {
       } else if (Array.isArray(element)) {
         flattenedList.push(this._flattenList(element));
       } else if (JsonHash._isBasicType(element)) {
-        flattenedList.push(
-          JsonHash._convertBasicType(element, this.floatingPointPrecision),
-        );
+        flattenedList.push(this._convertBasicType(element));
       }
     }
 
@@ -269,13 +328,14 @@ export class JsonHash {
   /**
    * Recursively processes a list, adding hashes to nested objects and lists.
    * @param {Array<any>} list - The list to process.
+   * @param {ApplyConfig} applyConfig - Whether to process recursively.
    */
-  _processList(list) {
+  _processList(list, applyConfig) {
     for (const element of list) {
       if (typeof element === 'object' && !Array.isArray(element)) {
-        this._addHashesToObject(element, this.recursive);
+        this._addHashesToObject(element, applyConfig);
       } else if (Array.isArray(element)) {
-        this._processList(element);
+        this._processList(element, applyConfig);
       }
     }
   }
@@ -342,36 +402,60 @@ export class JsonHash {
   // ...........................................................................
   /**
    * Turns a number into a string with a given precision.
-   * @param {number} value - The number to truncate.
-   * @param {number} precision - The precision to use.
-   * @returns {number} The truncated number.
+   * @param {number} value - The number to check.
    */
-  static _truncate(value, precision) {
+  _checkNumber(value) {
+    if (isNaN(value)) {
+      throw new Error('NaN is not supported.');
+    }
+
     if (Number.isInteger(value)) {
       return value;
     }
 
-    let result = value.toString();
-    const parts = result.split('.');
-    const integerPart = parts[0];
-    let commaParts = parts[1];
-
-    let truncatedCommaParts =
-      commaParts.length > precision
-        ? commaParts.substring(0, precision)
-        : commaParts;
-
-    // Remove trailing zeros
-    if (truncatedCommaParts.endsWith('0')) {
-      truncatedCommaParts = truncatedCommaParts.replace(/0+$/, '');
+    if (this._exceedsPrecision(value)) {
+      throw new Error(`Number ${value} has a higher precision than 0.001.`);
     }
 
-    if (truncatedCommaParts.length === 0) {
-      return parseInt(integerPart, 10);
+    if (this._exceedsUpperRange(value)) {
+      throw new Error(`Number ${value} exceeds NumberConfig.maxNum.`);
     }
 
-    result = `${integerPart}.${truncatedCommaParts}`;
-    return parseFloat(result);
+    if (this._exceedsLowerRange(value)) {
+      throw new Error(`Number ${value} is smaller NumberConfig.minNum.`);
+    }
+  }
+
+  // ...........................................................................
+  /**
+   * Checks if a number exceeds the defined range.
+   * @param {number} value - The number to check.
+   * @returns {boolean} True if the number exceeds the given range, false otherwise.
+   */
+  _exceedsUpperRange(value) {
+    return value > this.config.numberConfig.maxNum;
+  }
+
+  // ...........................................................................
+  /**
+   * Checks if a number exceeds the defined range.
+   * @param {number} value - The number to check.
+   * @returns {boolean} True if the number exceeds the given range, false otherwise.
+   */
+  _exceedsLowerRange(value) {
+    return value < this.config.numberConfig.minNum;
+  }
+
+  // ...........................................................................
+  /**
+   * Checks if a number exceeds the precision.
+   * @param {number} value - The number to check.
+   * @returns {boolean} True if the number exceeds the precision, false otherwise.
+   */
+  _exceedsPrecision(value) {
+    const precision = this.config.numberConfig.precision;
+    const roundedValue = Math.round(value / precision) * precision;
+    return Math.abs(value - roundedValue) > Number.EPSILON;
   }
 
   // ...........................................................................
@@ -403,21 +487,5 @@ export class JsonHash {
     return `{${Object.entries(map)
       .map(([key, value]) => `"${key}":${encodeValue(value)}`)
       .join(',')}}`;
-  }
-
-  // ...........................................................................
-  /**
-   * Exposes private methods for testing purposes.
-   * @returns {Record<string, Function>} An object containing the private methods.
-   */
-  static get privateMethods() {
-    return {
-      _copyJson: JsonHash._copyJson,
-      _copyList: JsonHash._copyList,
-      _isBasicType: JsonHash._isBasicType,
-      _truncate: JsonHash._truncate,
-      _jsonString: JsonHash._jsonString,
-      _convertBasicType: JsonHash._convertBasicType,
-    };
   }
 }
