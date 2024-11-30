@@ -9,9 +9,13 @@ export default defineConfig({
     environment: 'jsdom', // Standard environment for tests
     exclude: [...configDefaults.exclude, '**/coverage/**'], // Exclude tests (optional)
     coverage: {
-      enabled: true,
+      enabled: false, // Enable coverage, also when no --coverage flag is provided
       provider: 'v8', // v8, c8 Or 'istanbul' if you want coverage
-      exclude: [...configDefaults.coverage.exclude, 'examples/**'], // Exclude the "examples" folder from coverage
+      exclude: [
+        ...configDefaults.coverage.exclude,
+        'examples/**',
+        '**/coverage/**',
+      ], // Exclude the "examples" folder from coverage
       thresholds: {
         statements: 100,
         branches: 100,
