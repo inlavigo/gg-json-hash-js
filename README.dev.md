@@ -12,6 +12,12 @@ npx tsc
 npm test
 ```
 
+## Run example
+
+```bash
+node examples/gg-json-hash-example.js
+```
+
 ## Publish npm
 
 ```bash

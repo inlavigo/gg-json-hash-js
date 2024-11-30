@@ -5,7 +5,7 @@
 // found in the LICENSE file in the root of this package.
 
 import { beforeEach, expect, suite, test } from 'vitest';
-import { ApplyConfig, JsonHash } from './gg-json-hash';
+import { ApplyJsonHashConfig, JsonHash } from './gg-json-hash';
 
 suite('JsonHash', () => {
   let jh = JsonHash.default;
@@ -52,7 +52,7 @@ suite('JsonHash', () => {
         });
 
         test('existing _hash should be overwritten', () => {
-          const ac = ApplyConfig.default;
+          const ac = ApplyJsonHashConfig.default;
           ac.throwIfOnWrongHashes = false;
 
           const json = jh.apply(
@@ -241,13 +241,13 @@ suite('JsonHash', () => {
     });
 
     suite('writes the hashes directly into the given json', () => {
-      suite('when ApplyConfig.inPlace is true', () => {
+      suite('when ApplyJsonHashConfig.inPlace is true', () => {
         test('writes hashes into original json', () => {
           const json = {
             key: 'value',
           };
 
-          const ac = new ApplyConfig();
+          const ac = new ApplyJsonHashConfig();
           ac.inPlace = true;
           const hashedJson = jh.apply(json, ac);
           expect(hashedJson).toEqual({
@@ -261,12 +261,12 @@ suite('JsonHash', () => {
     });
 
     suite('writes the hashes into a copy', () => {
-      suite('when ApplyConfig.inPlace is false', () => {
+      suite('when ApplyJsonHashConfig.inPlace is false', () => {
         test('does not touch the original object', () => {
           const json = {
             key: 'value',
           };
-          const ac = new ApplyConfig();
+          const ac = new ApplyJsonHashConfig();
           ac.inPlace = false;
 
           // The returned copy has the hashes
@@ -285,107 +285,113 @@ suite('JsonHash', () => {
     });
 
     suite('replaces/updates existing hashes', () => {
-      suite('when ApplyConfig.updateExistingHashes is set to true', () => {
-        const allHashesChanged = (/**@type{Record<string, any>}**/ json) => {
-          return (
-            json['a']['_hash'] !== 'hash_a' &&
-            json['a']['b']['_hash'] !== 'hash_b' &&
-            json['a']['b']['c']['_hash'] !== 'hash_c'
-          );
-        };
-
-        const ac = new ApplyConfig();
-        ac.inPlace = true;
-        ac.throwIfOnWrongHashes = false;
-
-        test('should recalculate existing hashes', () => {
-          const json = {
-            a: {
-              _hash: 'hash_a',
-              b: {
-                _hash: 'hash_b',
-                c: {
-                  _hash: 'hash_c',
-                  d: 'value',
-                },
-              },
-            },
+      suite(
+        'when ApplyJsonHashConfig.updateExistingHashes is set to true',
+        () => {
+          const allHashesChanged = (/**@type{Record<string, any>}**/ json) => {
+            return (
+              json['a']['_hash'] !== 'hash_a' &&
+              json['a']['b']['_hash'] !== 'hash_b' &&
+              json['a']['b']['c']['_hash'] !== 'hash_c'
+            );
           };
 
-          ac.updateExistingHashes = true;
-          jh.apply(json, ac);
-          expect(allHashesChanged(json)).toBe(true);
-        });
-      });
+          const ac = new ApplyJsonHashConfig();
+          ac.inPlace = true;
+          ac.throwIfOnWrongHashes = false;
+
+          test('should recalculate existing hashes', () => {
+            const json = {
+              a: {
+                _hash: 'hash_a',
+                b: {
+                  _hash: 'hash_b',
+                  c: {
+                    _hash: 'hash_c',
+                    d: 'value',
+                  },
+                },
+              },
+            };
+
+            ac.updateExistingHashes = true;
+            jh.apply(json, ac);
+            expect(allHashesChanged(json)).toBe(true);
+          });
+        },
+      );
     });
 
     suite('does not touch existing hashes', () => {
-      suite('when ApplyConfig.updateExistingHashes is set to false', () => {
-        const noHashesChanged = () => {
-          return (
-            json['a']['_hash'] === 'hash_a' &&
-            json['a']['b']['_hash'] === 'hash_b' &&
-            json['a']['b']['c']['_hash'] === 'hash_c'
-          );
-        };
+      suite(
+        'when ApplyJsonHashConfig.updateExistingHashes is set to false',
+        () => {
+          const noHashesChanged = () => {
+            return (
+              json['a']['_hash'] === 'hash_a' &&
+              json['a']['b']['_hash'] === 'hash_b' &&
+              json['a']['b']['c']['_hash'] === 'hash_c'
+            );
+          };
 
-        const ac = new ApplyConfig();
-        ac.inPlace = true;
+          const ac = new ApplyJsonHashConfig();
+          ac.inPlace = true;
 
-        /** @type Record<string, any> */
-        let json = {};
+          /** @type Record<string, any> */
+          let json = {};
 
-        beforeEach(() => {
-          json = {
-            a: {
-              _hash: 'hash_a',
-              b: {
-                _hash: 'hash_b',
-                c: {
-                  _hash: 'hash_c',
-                  d: 'value',
+          beforeEach(() => {
+            json = {
+              a: {
+                _hash: 'hash_a',
+                b: {
+                  _hash: 'hash_b',
+                  c: {
+                    _hash: 'hash_c',
+                    d: 'value',
+                  },
                 },
               },
-            },
+            };
+          });
+
+          const changedHashes = () => {
+            const result = [];
+            if (json['a']['_hash'] !== 'hash_a') {
+              result.push('a');
+            }
+
+            if (json['a']['b']['_hash'] !== 'hash_b') {
+              result.push('b');
+            }
+
+            if (json['a']['b']['c']['_hash'] !== 'hash_c') {
+              result.push('c');
+            }
+
+            return result;
           };
-        });
 
-        const changedHashes = () => {
-          const result = [];
-          if (json['a']['_hash'] !== 'hash_a') {
-            result.push('a');
-          }
+          test('with all objects having hashes', () => {
+            ac.updateExistingHashes = false;
+            jh.apply(json, ac);
+            expect(noHashesChanged()).toBe(true);
+          });
 
-          if (json['a']['b']['_hash'] !== 'hash_b') {
-            result.push('b');
-          }
+          test('with parents have no hashes', () => {
+            delete json['a']['_hash'];
+            ac.updateExistingHashes = false;
+            jh.apply(json, ac);
+            expect(changedHashes()).toEqual(['a']);
 
-          if (json['a']['b']['c']['_hash'] !== 'hash_c') {
-            result.push('c');
-          }
-
-          return result;
-        };
-
-        test('with all objects having hashes', () => {
-          ac.updateExistingHashes = false;
-          jh.apply(json, ac);
-          expect(noHashesChanged()).toBe(true);
-        });
-
-        test('with parents have no hashes', () => {
-          delete json['a']['_hash'];
-          ac.updateExistingHashes = false;
-          jh.apply(json, ac);
-          expect(changedHashes()).toEqual(['a']);
-
-          delete json['a']['_hash'];
-          delete json['a']['b']['_hash'];
-          ac.updateExistingHashes = false;
-          jh.apply(json, ac);
-          expect(changedHashes()).toEqual(['a', 'b']);
-        });
-      });
+            delete json['a']['_hash'];
+            delete json['a']['b']['_hash'];
+            ac.updateExistingHashes = false;
+            jh.apply(json, ac);
+            expect(changedHashes()).toEqual(['a', 'b']);
+          });
+        },
+      );
     });
 
     suite('checks numbers', () => {
@@ -598,7 +604,7 @@ suite('JsonHash', () => {
             }
 
             expect(message).toEqual(
-              `Error: Number ${val} exceeds NumberConfig.maxNum.`,
+              `Error: Number ${val} exceeds NumberHashingConfig.maxNum.`,
             );
           }
 
@@ -629,7 +635,7 @@ suite('JsonHash', () => {
             }
 
             expect(message).toEqual(
-              `Error: Number ${val} is smaller NumberConfig.minNum.`,
+              `Error: Number ${val} is smaller NumberHashingConfig.minNum.`,
             );
           }
 
@@ -643,32 +649,8 @@ suite('JsonHash', () => {
     suite(
       'throws, when existing hashes do not match newly calculated ones',
       () => {
-        suite('when ApplyConfig.throwIfOnWrongHashes is set to true', () => {
-          test('with a simple json', () => {
-            const json = {
-              key: 'value',
-              _hash: 'wrongHash',
-            };
-
-            const ac = new ApplyConfig();
-            ac.throwIfOnWrongHashes = true;
-
-            let message = '';
-            try {
-              jh.apply(json, ac);
-            } catch (/** @type any */ e) {
-              message = e.toString();
-            }
-
-            expect(message).toEqual(
-              'Error: Hash "wrongHash" does not match the newly calculated one "5Dq88zdSRIOcAS-WM_lYYt". ' +
-                'Please make sure that all systems are producing the same hashes.',
-            );
-          });
-        });
-
         suite(
-          'but not when ApplyConfig.throwIfOnWrongHashes is set to false',
+          'when ApplyJsonHashConfig.throwIfOnWrongHashes is set to true',
           () => {
             test('with a simple json', () => {
               const json = {
@@ -676,7 +658,34 @@ suite('JsonHash', () => {
                 _hash: 'wrongHash',
               };
 
-              const ac = new ApplyConfig();
+              const ac = new ApplyJsonHashConfig();
+              ac.throwIfOnWrongHashes = true;
+
+              let message = '';
+              try {
+                jh.apply(json, ac);
+              } catch (/** @type any */ e) {
+                message = e.toString();
+              }
+
+              expect(message).toEqual(
+                'Error: Hash "wrongHash" does not match the newly calculated one "5Dq88zdSRIOcAS-WM_lYYt". ' +
+                  'Please make sure that all systems are producing the same hashes.',
+              );
+            });
+          },
+        );
+
+        suite(
+          'but not when ApplyJsonHashConfig.throwIfOnWrongHashes is set to false',
+          () => {
+            test('with a simple json', () => {
+              const json = {
+                key: 'value',
+                _hash: 'wrongHash',
+              };
+
+              const ac = new ApplyJsonHashConfig();
               ac.throwIfOnWrongHashes = false;
               ac.inPlace = true;
 

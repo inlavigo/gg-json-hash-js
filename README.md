@@ -38,7 +38,7 @@ Hashing nested JSON objects makes sense for several key reasons:
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { ApplyConfig, JsonHash } from '../src/gg-json-hash.js';
+import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash.js';
 
 const print = console.log;
 const assert = console.assert;
@@ -90,7 +90,7 @@ try {
 print('Use the "inPlace" option to modify the input object directly.');
 
 json = { a: 1, b: 2 };
-let ac = new ApplyConfig();
+let ac = new ApplyJsonHashConfig();
 ac.inPlace = true;
 
 jh.apply(json, ac);
@@ -103,7 +103,7 @@ print(
 );
 
 json = { a: 1, b: 2, child: { c: 3 }, child2: { _hash: 'ABC123', d: 4 } };
-ac = new ApplyConfig();
+ac = new ApplyJsonHashConfig();
 ac.updateExistingHashes = false;
 json = jh.apply(json, ac);
 assert(json._hash === 'pos6bn6mON0sirhEaXq41-');

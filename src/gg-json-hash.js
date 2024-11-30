@@ -16,7 +16,7 @@ import { sha256 } from 'js-sha256';
  * different hashes although the numbers are considered equal. This
  * class provides a configuration for hashing numbers.
  */
-export class NumberConfig {
+export class NumberHashingConfig {
   precision = 0.001;
   maxNum = 1000 * 1000 * 1000;
   minNum = -this.maxNum;
@@ -25,10 +25,10 @@ export class NumberConfig {
   /**
    * Default configuration.
    *
-   * @type {NumberConfig}
+   * @type {NumberHashingConfig}
    */
   static get default() {
-    return new NumberConfig();
+    return new NumberHashingConfig();
   }
 }
 
@@ -36,7 +36,7 @@ export class NumberConfig {
 /**
  * When writing hashes into a given JSON object, we have various options.
  */
-export class ApplyConfig {
+export class ApplyJsonHashConfig {
   /**
    * Constructor
    * @param {boolean} [inPlace=false] - Whether to modify the JSON object in place.
@@ -56,10 +56,10 @@ export class ApplyConfig {
   /**
    * Default configuration.
    *
-   * @type {ApplyConfig}
+   * @type {ApplyJsonHashConfig}
    */
   static get default() {
-    return new ApplyConfig();
+    return new ApplyJsonHashConfig();
   }
 }
 
@@ -73,12 +73,12 @@ export class HashConfig {
    * Constructor
    * @param {number} [hashLength=22] - Length of the hash.
    * @param {string} [hashAlgorithm='SHA-256'] - Algorithm to use for hashing.
-   * @param {NumberConfig} [numberConfig=HashNumberConfig.default] - Configuration for hashing numbers.
+   * @param {NumberHashingConfig} [numberConfig=HashNumberHashingConfig.default] - Configuration for hashing numbers.
    */
   constructor(hashLength, hashAlgorithm, numberConfig) {
     this.hashLength = hashLength ?? 22;
     this.hashAlgorithm = hashAlgorithm ?? 'SHA-256';
-    this.numberConfig = numberConfig ?? NumberConfig.default;
+    this.numberConfig = numberConfig ?? NumberHashingConfig.default;
   }
 
   hashLength;
@@ -125,11 +125,11 @@ export class JsonHash {
   /**
    * Writes hashes into the JSON object.
    * @param {Record<string, any>} json - The JSON object to hash.
-   * @param {ApplyConfig} [applyConfig=HashApplyToConfig.default] - Options for the operation.
+   * @param {ApplyJsonHashConfig} [applyConfig=HashApplyToConfig.default] - Options for the operation.
    * @returns {Record<string, any>} The JSON object with hashes added.
    */
   apply(json, applyConfig) {
-    applyConfig = applyConfig ?? ApplyConfig.default;
+    applyConfig = applyConfig ?? ApplyJsonHashConfig.default;
     const copy = applyConfig.inPlace ? json : JsonHash._copyJson(json);
     this._addHashesToObject(copy, applyConfig);
     return copy;
@@ -143,7 +143,7 @@ export class JsonHash {
    */
   applyToJsonString(jsonString) {
     const json = JSON.parse(jsonString);
-    const applyConfig = ApplyConfig.default;
+    const applyConfig = ApplyJsonHashConfig.default;
     applyConfig.inPlace = true;
     const hashedJson = this.apply(json, applyConfig);
     return JSON.stringify(hashedJson);
@@ -171,7 +171,7 @@ export class JsonHash {
    */
   validate(json) {
     // Check the hash of the high level element
-    const ac = ApplyConfig.default;
+    const ac = ApplyJsonHashConfig.default;
     ac.throwIfOnWrongHashes = false;
     const jsonWithCorrectHashes = this.apply(json, ac);
     this._validate(json, jsonWithCorrectHashes, '');
@@ -228,7 +228,7 @@ export class JsonHash {
   /**
    * Recursively adds hashes to a nested object.
    * @param {Record<string, any>} obj - The object to add hashes to.
-   * @param {ApplyConfig} applyConfig - Whether to process recursively.
+   * @param {ApplyJsonHashConfig} applyConfig - Whether to process recursively.
    */
   _addHashesToObject(obj, applyConfig) {
     const updateExisting = applyConfig.updateExistingHashes;
@@ -343,7 +343,7 @@ export class JsonHash {
   /**
    * Recursively processes a list, adding hashes to nested objects and lists.
    * @param {Array<any>} list - The list to process.
-   * @param {ApplyConfig} applyConfig - Whether to process recursively.
+   * @param {ApplyJsonHashConfig} applyConfig - Whether to process recursively.
    */
   _processList(list, applyConfig) {
     for (const element of list) {
@@ -433,11 +433,11 @@ export class JsonHash {
     }
 
     if (this._exceedsUpperRange(value)) {
-      throw new Error(`Number ${value} exceeds NumberConfig.maxNum.`);
+      throw new Error(`Number ${value} exceeds NumberHashingConfig.maxNum.`);
     }
 
     if (this._exceedsLowerRange(value)) {
-      throw new Error(`Number ${value} is smaller NumberConfig.minNum.`);
+      throw new Error(`Number ${value} is smaller NumberHashingConfig.minNum.`);
     }
   }
 
