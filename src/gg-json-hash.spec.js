@@ -4,13 +4,14 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { beforeEach, expect, suite, test } from 'vitest';
 import { JsonHash, addHashes } from './gg-json-hash';
 
 const jh = new JsonHash({});
 
-describe('JsonHash', () => {
-  describe('with a simple json', () => {
-    describe('containing only one key value pair', () => {
+suite('JsonHash', () => {
+  suite('with a simple json', () => {
+    suite('containing only one key value pair', () => {
       test('with a string value', () => {
         const json = addHashes({ key: 'value' });
         expect(json.key).toEqual('value');
@@ -70,7 +71,7 @@ describe('JsonHash', () => {
       expect(json._hash).toEqual('5Dq88zdSRIOcAS-WM_lYYt');
     });
 
-    describe('containing floating point numbers', () => {
+    suite('containing floating point numbers', () => {
       test('truncates the floating point numbers to "hashFloatingPrecision" 10 decimal places', () => {
         const hash0 = addHashes(
           // eslint-disable-next-line no-loss-of-precision
@@ -91,7 +92,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('containing three key value pairs', () => {
+    suite('containing three key value pairs', () => {
       const json0 = {
         a: 'value',
         b: 1.0,
@@ -130,7 +131,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('with a nested json', () => {
+  suite('with a nested json', () => {
     test('of level 1', () => {
       const parent = addHashes({
         key: 'value',
@@ -182,9 +183,9 @@ describe('JsonHash', () => {
     expect(hashedJsonString).toEqual(exampleJsonWithHashes);
   });
 
-  describe('with an array', () => {
-    describe('on top level', () => {
-      describe('containing only simple types', () => {
+  suite('with an array', () => {
+    suite('on top level', () => {
+      suite('containing only simple types', () => {
         test('should convert all values to strings and hash it', () => {
           const json = addHashes({
             key: ['value', 1.0, true],
@@ -197,9 +198,9 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('containing nested objects', () => {
-        describe('should hash the nested objects', () => {
-          describe('and use the hash instead of the stringified value', () => {
+      suite('containing nested objects', () => {
+        suite('should hash the nested objects', () => {
+          suite('and use the hash instead of the stringified value', () => {
             test('with a complicated array', () => {
               const json = addHashes({
                 array: [
@@ -241,7 +242,7 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('containing nested arrays', () => {
+      suite('containing nested arrays', () => {
         test('should hash the nested arrays', () => {
           const json = addHashes({
             array: [['key', 1.0, true], 'hello'],
@@ -256,7 +257,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('throws', () => {
+  suite('throws', () => {
     test('when data contains an unsupported type', () => {
       let message;
 
@@ -272,8 +273,8 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('private methods', () => {
-    describe('_copyJson', () => {
+  suite('private methods', () => {
+    suite('_copyJson', () => {
       const copyJson = JsonHash.privateMethods._copyJson;
 
       test('empty json', () => {
@@ -324,8 +325,8 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('throws', () => {
-        describe('on unsupported type', () => {
+      suite('throws', () => {
+        suite('on unsupported type', () => {
           test('in map', () => {
             let message;
             try {
@@ -355,7 +356,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('_isBasicType', () => {
+    suite('_isBasicType', () => {
       const isBasicType = JsonHash.privateMethods._isBasicType;
 
       test('returns true if type is a basic type', () => {
@@ -368,7 +369,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('_truncate(double, precision)', () => {
+    suite('_truncate(double, precision)', () => {
       const truncate = JsonHash.privateMethods._truncate;
 
       test('truncates commas but only if precision exceeds precision', () => {
@@ -397,7 +398,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('_jsonString(map)', () => {
+    suite('_jsonString(map)', () => {
       const jsonString = JsonHash.privateMethods._jsonString;
 
       test('converts a map into a json string', () => {
@@ -431,7 +432,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('_convertBasicType(string)', () => {
+    suite('_convertBasicType(string)', () => {
       const _convertBasicType = JsonHash.privateMethods._convertBasicType;
       test('with a string', () => {
         expect(_convertBasicType('hello', 5)).toEqual('hello');
@@ -462,7 +463,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('applyToString()', () => {
+  suite('applyToString()', () => {
     test('should add the hash to the json string', () => {
       const json = '{"key": "value"}';
       const jsonString = new JsonHash({}).applyToString(json);
@@ -472,7 +473,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('with updateExistingHashes', () => {
+  suite('with updateExistingHashes', () => {
     /** @type Record<string, any> */
     let json;
 
@@ -524,15 +525,15 @@ describe('JsonHash', () => {
       return result;
     };
 
-    describe('true', () => {
+    suite('true', () => {
       test('should recalculate existing hashes', () => {
         addHashes(json, { updateExistingHashes: true, inPlace: true });
         expect(allHashesChanged()).toBe(true);
       });
     });
 
-    describe('false', () => {
-      describe('should not recalculate existing hashes', () => {
+    suite('false', () => {
+      suite('should not recalculate existing hashes', () => {
         test('with all objects having hashes', () => {
           addHashes(json, { updateExistingHashes: false, inPlace: true });
           expect(noHashesChanged()).toBe(true);
@@ -552,8 +553,8 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('with inPlace', () => {
-    describe('false', () => {
+  suite('with inPlace', () => {
+    suite('false', () => {
       test('does not touch the original object', () => {
         const json = {
           key: 'value',
@@ -571,7 +572,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('true', () => {
+    suite('true', () => {
       test('writes hashes into original json', () => {
         const json = {
           key: 'value',
@@ -588,7 +589,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('with recursive', () => {
+  suite('with recursive', () => {
     let json = {
       a: {
         _hash: 'hash_a',
@@ -605,7 +606,7 @@ describe('JsonHash', () => {
       _hash: 'hash_0',
     };
 
-    describe('true', () => {
+    suite('true', () => {
       test('should recalculate deeply all hashes', () => {
         const result = addHashes(json, { recursive: true });
 
@@ -615,7 +616,7 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('false', () => {
+    suite('false', () => {
       test('should only calc the first hash', () => {
         const result = addHashes(json, { recursive: false });
 
@@ -625,9 +626,9 @@ describe('JsonHash', () => {
       });
     });
 
-    describe('validate', () => {
-      describe('with an empty json', () => {
-        describe('throws', () => {
+    suite('validate', () => {
+      suite('with an empty json', () => {
+        suite('throws', () => {
           test('when no hash is given', () => {
             let message;
 
@@ -657,7 +658,7 @@ describe('JsonHash', () => {
           });
         });
 
-        describe('does not throw', () => {
+        suite('does not throw', () => {
           test('when hash is correct', () => {
             expect(() =>
               jh.validate({
@@ -668,8 +669,8 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('with a single level json', () => {
-        describe('throws', () => {
+      suite('with a single level json', () => {
+        suite('throws', () => {
           test('when no hash is given', () => {
             let message;
 
@@ -700,7 +701,7 @@ describe('JsonHash', () => {
           });
         });
 
-        describe('does not throw', () => {
+        suite('does not throw', () => {
           test('when hash is correct', () => {
             expect(() =>
               jh.validate({
@@ -712,7 +713,7 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('with a deeply nested json', () => {
+      suite('with a deeply nested json', () => {
         /** @type {Record<string, any>} */
         let json2;
 
@@ -729,8 +730,8 @@ describe('JsonHash', () => {
           };
         });
 
-        describe('throws', () => {
-          describe('when no hash is given', () => {
+        suite('throws', () => {
+          suite('when no hash is given', () => {
             test('at the root', () => {
               let message;
               delete json2['_hash'];
@@ -771,7 +772,7 @@ describe('JsonHash', () => {
             });
           });
 
-          describe('when hash is wrong', () => {
+          suite('when hash is wrong', () => {
             test('at the root', () => {
               let message;
               json2['_hash'] = 'wrongHash';
@@ -818,7 +819,7 @@ describe('JsonHash', () => {
             });
           });
 
-          describe('not', () => {
+          suite('not', () => {
             test('when hash is correct', () => {
               expect(() => jh.validate(json2)).not.toThrow();
             });
@@ -826,7 +827,7 @@ describe('JsonHash', () => {
         });
       });
 
-      describe('with a deeply nested json with child array', () => {
+      suite('with a deeply nested json with child array', () => {
         /** @type {Record<string, any>} */
         let json2;
 
@@ -842,8 +843,8 @@ describe('JsonHash', () => {
           };
         });
 
-        describe('throws', () => {
-          describe('when no hash is given', () => {
+        suite('throws', () => {
+          suite('when no hash is given', () => {
             test('at the parent', () => {
               let message;
               delete json2['parent'][0]['_hash'];
@@ -873,7 +874,7 @@ describe('JsonHash', () => {
             });
           });
 
-          describe('when hash is wrong', () => {
+          suite('when hash is wrong', () => {
             test('at the parent', () => {
               let message;
               json2['parent'][0]['_hash'] = 'wrongHash';
@@ -905,7 +906,7 @@ describe('JsonHash', () => {
             });
           });
 
-          describe('not', () => {
+          suite('not', () => {
             test('when hash is correct', () => {
               expect(() => jh.validate(json2)).not.toThrow();
             });
@@ -915,7 +916,7 @@ describe('JsonHash', () => {
     });
   });
 
-  describe('special cases', () => {});
+  // suite('special cases', () => {});
 });
 
 const exampleJson = `{
