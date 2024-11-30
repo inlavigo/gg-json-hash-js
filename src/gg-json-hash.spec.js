@@ -8,7 +8,7 @@ import { beforeEach, expect, suite, test } from 'vitest';
 import { ApplyConfig, JsonHash } from './gg-json-hash';
 
 suite('JsonHash', () => {
-  let jh = new JsonHash();
+  let jh = JsonHash.default;
 
   beforeEach(() => {
     jh = new JsonHash();
@@ -52,10 +52,16 @@ suite('JsonHash', () => {
         });
 
         test('existing _hash should be overwritten', () => {
-          const json = jh.apply({
-            key: 'value',
-            _hash: 'oldHash',
-          });
+          const ac = ApplyConfig.default;
+          ac.throwIfOnWrongHashes = false;
+
+          const json = jh.apply(
+            {
+              key: 'value',
+              _hash: 'oldHash',
+            },
+            ac,
+          );
           expect(json.key).toEqual('value');
           const expectedHash = jh.calcHash('{"key":"value"}');
           expect(json._hash).toEqual(expectedHash);
@@ -290,6 +296,7 @@ suite('JsonHash', () => {
 
         const ac = new ApplyConfig();
         ac.inPlace = true;
+        ac.throwIfOnWrongHashes = false;
 
         test('should recalculate existing hashes', () => {
           const json = {
@@ -632,6 +639,54 @@ suite('JsonHash', () => {
         });
       });
     });
+
+    suite(
+      'throws, when existing hashes do not match newly calculated ones',
+      () => {
+        suite('when ApplyConfig.throwIfOnWrongHashes is set to true', () => {
+          test('with a simple json', () => {
+            const json = {
+              key: 'value',
+              _hash: 'wrongHash',
+            };
+
+            const ac = new ApplyConfig();
+            ac.throwIfOnWrongHashes = true;
+
+            let message = '';
+            try {
+              jh.apply(json, ac);
+            } catch (/** @type any */ e) {
+              message = e.toString();
+            }
+
+            expect(message).toEqual(
+              'Error: Hash "wrongHash" does not match the newly calculated one "5Dq88zdSRIOcAS-WM_lYYt". ' +
+                'Please make sure that all systems are producing the same hashes.',
+            );
+          });
+        });
+
+        suite(
+          'but not when ApplyConfig.throwIfOnWrongHashes is set to false',
+          () => {
+            test('with a simple json', () => {
+              const json = {
+                key: 'value',
+                _hash: 'wrongHash',
+              };
+
+              const ac = new ApplyConfig();
+              ac.throwIfOnWrongHashes = false;
+              ac.inPlace = true;
+
+              jh.apply(json, ac);
+              expect(json._hash).toEqual('5Dq88zdSRIOcAS-WM_lYYt');
+            });
+          },
+        );
+      },
+    );
   });
 
   suite('applyToJsonString(string)', () => {

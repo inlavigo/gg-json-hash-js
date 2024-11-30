@@ -6,7 +6,6 @@
 
 *.spec.js
 
-src/
 tests/
 
 coverage
@@ -16,5 +15,7 @@ eslint.config.mjs
 extensions.json
 vite.config.js
 *.tgz
+
+tsconfig.json
 
 README.dev.md
