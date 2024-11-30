@@ -1,6 +1,6 @@
 {
   "name": "gg-json-hash",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "main": "dist/gg-json-hash.js",
   "types": "dist/gg-json-hash.d.ts",
   "scripts": {

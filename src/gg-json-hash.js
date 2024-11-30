@@ -46,12 +46,12 @@ export class ApplyConfig {
   constructor(inPlace, updateExistingHashes, throwOnHashMismatch) {
     this.inPlace = inPlace ?? false;
     this.updateExistingHashes = updateExistingHashes ?? true;
-    this.throwOnHashChanges = throwOnHashMismatch ?? true;
+    this.throwIfOnWrongHashes = throwOnHashMismatch ?? true;
   }
 
   inPlace;
   updateExistingHashes;
-  throwOnHashChanges;
+  throwIfOnWrongHashes;
 
   /**
    * Default configuration.
@@ -171,7 +171,9 @@ export class JsonHash {
    */
   validate(json) {
     // Check the hash of the high level element
-    const jsonWithCorrectHashes = this.apply(json);
+    const ac = ApplyConfig.default;
+    ac.throwIfOnWrongHashes = false;
+    const jsonWithCorrectHashes = this.apply(json, ac);
     this._validate(json, jsonWithCorrectHashes, '');
   }
 
@@ -230,6 +232,7 @@ export class JsonHash {
    */
   _addHashesToObject(obj, applyConfig) {
     const updateExisting = applyConfig.updateExistingHashes;
+    const throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
 
     if (!updateExisting && Object.prototype.hasOwnProperty.call(obj, '_hash')) {
       return;
@@ -239,9 +242,10 @@ export class JsonHash {
     for (const [, value] of Object.entries(obj)) {
       if (typeof value === 'object' && !Array.isArray(value)) {
         const existingHash = value['_hash'];
-        if (!updateExisting && existingHash != null) {
+        if (existingHash != null && !updateExisting) {
           continue;
         }
+
         this._addHashesToObject(value, applyConfig);
       } else if (Array.isArray(value)) {
         this._processList(value, applyConfig);
@@ -277,6 +281,17 @@ export class JsonHash {
 
     // Compute the SHA-256 hash of the JSON string
     const hash = this.calcHash(sortedMapJson);
+
+    // Throw if old and new hash do not match
+    if (throwIfOnWrongHashes) {
+      const oldHash = obj['_hash'];
+      if (oldHash != null && oldHash !== hash) {
+        throw new Error(
+          `Hash "${oldHash}" does not match the newly calculated one "${hash}". ` +
+            'Please make sure that all systems are producing the same hashes.',
+        );
+      }
+    }
 
     // Add the hash to the original object
     obj['_hash'] = hash;

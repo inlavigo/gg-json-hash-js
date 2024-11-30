@@ -24,7 +24,7 @@ let json = {
 };
 
 // .............................................................................
-print('Add hashes to the json structure');
+print('Add hashes to the json structure.');
 json = jh.apply(json);
 print(JSON.stringify(json, null, 2));
 
@@ -40,7 +40,7 @@ print(JSON.stringify(json, null, 2));
 // }
 
 // .............................................................................
-print('Set a maximum floating point precision');
+print('Set a maximum floating point precision.');
 
 jh.config.numberConfig.precision = 0.001;
 
@@ -53,7 +53,7 @@ try {
 }
 
 // .............................................................................
-print('Use the "inPlace" option to modify the input object');
+print('Use the "inPlace" option to modify the input object directly.');
 
 json = { a: 1, b: 2 };
 let ac = new ApplyConfig();
@@ -65,7 +65,7 @@ assert(json._hash, 'QyWM_3g_5wNtikMDP4MK38');
 // .............................................................................
 print(
   'Set "upateExistingHashes: false" to create missing hashes but ' +
-    'not touch existing ones.',
+    'without touching existing ones.',
 );
 
 json = { a: 1, b: 2, child: { c: 3 }, child2: { _hash: 'ABC123', d: 4 } };
@@ -75,6 +75,24 @@ json = jh.apply(json, ac);
 assert(json._hash === 'pos6bn6mON0sirhEaXq41-');
 assert(json.child._hash === 'yrqcsGrHfad4G4u9fgcAxY');
 assert(json.child2._hash === 'ABC123');
+
+// .............................................................................
+print('If existing hashes do not match new ones, an error is thrown.');
+ac.throwIfOnWrongHashes = true;
+try {
+  jh.apply({ a: 1, _hash: 'invalid' });
+} catch (/** @type any */ e) {
+  print(e.message);
+  // 'Hash "invalid" does not match the newly calculated one "AVq9f1zFei3ZS3WQ8ErYCE".
+  // Please make sure that all systems are producing the same hashes.'
+}
+
+// .............................................................................
+print('Set "throwIfOnWrongHashes" to false to replace invalid hashes.');
+ac.throwIfOnWrongHashes = false;
+ac.updateExistingHashes = true;
+json = jh.apply({ a: 1, _hash: 'invalid' }, ac);
+print(json._hash); // AVq9f1zFei3ZS3WQ8ErYCE
 
 // .............................................................................
 print('Use validate to check if the hashes are correct');
