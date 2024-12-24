@@ -1,25 +1,28 @@
-# gg-json-hash
+# GgDb
 
-## Build typescript
+The project `GgDb` offers an interface to access relational data. It can
+be implemented agains relational databases like `Sqlite` or `Rljson`.
+
+## Run the tests
 
 ```bash
-npx tsc
+npm run test
 ```
 
-## Run tests
+## Publish the package
+
+Open `package.json`.
+
+Increase `version`.
+
+Compile typescript:
 
 ```bash
-npm test
+npm run build
 ```
 
-## Run example
+Make publish dry-run
 
 ```bash
-node examples/gg-json-hash-example.js
-```
-
-## Publish npm
-
-```bash
-npm publish
+npm publish --dry-run
 ```

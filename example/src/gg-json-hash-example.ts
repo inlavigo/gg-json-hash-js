@@ -1,10 +1,12 @@
+#!/usr/bin/env node
+
 // @license
 // Copyright (c) 2019 - 2024 Dr. Gabriel Gatzsche. All Rights Reserved.
 //
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash.js';
+import { ApplyJsonHashConfig, JsonHash } from 'gg-json-hash';
 
 const print = console.log;
 const assert = console.assert;
@@ -13,8 +15,7 @@ let jh = new JsonHash();
 // .............................................................................
 print('Create a json structure');
 
-/** @type any */
-let json = {
+let json: any = {
   a: '0',
   b: '1',
   child: {
@@ -48,7 +49,7 @@ try {
   jh.apply({
     a: 1.000001,
   });
-} catch (/** @type any */ e) {
+} catch (e: any) {
   print(e.message); // Number 1.000001 has a higher precision than 0.001
 }
 
@@ -81,7 +82,7 @@ print('If existing hashes do not match new ones, an error is thrown.');
 ac.throwIfOnWrongHashes = true;
 try {
   jh.apply({ a: 1, _hash: 'invalid' });
-} catch (/** @type any */ e) {
+} catch (e: any) {
   print(e.message);
   // 'Hash "invalid" does not match the newly calculated one "AVq9f1zFei3ZS3WQ8ErYCE".
   // Please make sure that all systems are producing the same hashes.'
@@ -104,6 +105,6 @@ jh.validate(json); // true
 try {
   json.a = 3;
   jh.validate({ a: 3, _hash: 'invalid' });
-} catch (e) {
+} catch (e: any) {
   print(e.message);
 }

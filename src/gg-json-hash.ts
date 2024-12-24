@@ -1,9 +1,3 @@
-// @license
-// Copyright (c) 2019 - 2024 Dr. Gabriel Gatzsche. All Rights Reserved.
-//
-// Use of this source code is governed by terms that can be
-// found in the LICENSE file in the root of this package.
-
 import { fromByteArray } from 'base64-js';
 import { sha256 } from 'js-sha256';
 
@@ -17,17 +11,17 @@ import { sha256 } from 'js-sha256';
  * class provides a configuration for hashing numbers.
  */
 export class NumberHashingConfig {
-  precision = 0.001;
-  maxNum = 1000 * 1000 * 1000;
-  minNum = -this.maxNum;
-  throwOnRangeError = true;
+  precision: number = 0.001;
+  maxNum: number = 1000 * 1000 * 1000;
+  minNum: number = -this.maxNum;
+  throwOnRangeError: boolean = true;
 
   /**
    * Default configuration.
    *
    * @type {NumberHashingConfig}
    */
-  static get default() {
+  static get default(): NumberHashingConfig {
     return new NumberHashingConfig();
   }
 }
@@ -37,28 +31,32 @@ export class NumberHashingConfig {
  * When writing hashes into a given JSON object, we have various options.
  */
 export class ApplyJsonHashConfig {
+  inPlace: boolean;
+  updateExistingHashes: boolean;
+  throwIfOnWrongHashes: boolean;
+
   /**
    * Constructor
    * @param {boolean} [inPlace=false] - Whether to modify the JSON object in place.
    * @param {boolean} [updateExistingHashes=true] - Whether to update existing hashes.
    * @param {boolean} [throwOnHashMismatch=true] - Whether to throw an error if existing hashes are wrong.
    */
-  constructor(inPlace, updateExistingHashes, throwOnHashMismatch) {
+  constructor(
+    inPlace?: boolean,
+    updateExistingHashes?: boolean,
+    throwOnHashMismatch?: boolean,
+  ) {
     this.inPlace = inPlace ?? false;
     this.updateExistingHashes = updateExistingHashes ?? true;
     this.throwIfOnWrongHashes = throwOnHashMismatch ?? true;
   }
-
-  inPlace;
-  updateExistingHashes;
-  throwIfOnWrongHashes;
 
   /**
    * Default configuration.
    *
    * @type {ApplyJsonHashConfig}
    */
-  static get default() {
+  static get default(): ApplyJsonHashConfig {
     return new ApplyJsonHashConfig();
   }
 }
@@ -68,6 +66,10 @@ export class ApplyJsonHashConfig {
  * Options for the JSON hash.
  */
 export class HashConfig {
+  hashLength: number;
+  hashAlgorithm: string;
+  numberConfig: NumberHashingConfig;
+
   // ...........................................................................
   /**
    * Constructor
@@ -75,22 +77,22 @@ export class HashConfig {
    * @param {string} [hashAlgorithm='SHA-256'] - Algorithm to use for hashing.
    * @param {NumberHashingConfig} [numberConfig=HashNumberHashingConfig.default] - Configuration for hashing numbers.
    */
-  constructor(hashLength, hashAlgorithm, numberConfig) {
+  constructor(
+    hashLength?: number,
+    hashAlgorithm?: string,
+    numberConfig?: NumberHashingConfig,
+  ) {
     this.hashLength = hashLength ?? 22;
     this.hashAlgorithm = hashAlgorithm ?? 'SHA-256';
     this.numberConfig = numberConfig ?? NumberHashingConfig.default;
   }
-
-  hashLength;
-  hashAlgorithm;
-  numberConfig;
 
   /**
    * Default configuration.
    *
    * @type {HashConfig}
    */
-  static get default() {
+  static get default(): HashConfig {
     return new HashConfig();
   }
 }
@@ -100,24 +102,23 @@ export class HashConfig {
  * Adds hashes to JSON object.
  */
 export class JsonHash {
+  config: HashConfig;
+
   // ...........................................................................
   /**
    * Constructor
    * @param {HashConfig} [config=HashConfig.default] - Configuration for the hash.
    */
-  constructor(config) {
+  constructor(config?: HashConfig) {
     this.config = config ?? HashConfig.default;
   }
-
-  /** @type {HashConfig} */
-  config;
 
   /**
    * Default instance.
    *
    * @type {JsonHash}
    */
-  static get default() {
+  static get default(): JsonHash {
     return new JsonHash();
   }
 
@@ -128,7 +129,10 @@ export class JsonHash {
    * @param {ApplyJsonHashConfig} [applyConfig=HashApplyToConfig.default] - Options for the operation.
    * @returns {Record<string, any>} The JSON object with hashes added.
    */
-  apply(json, applyConfig) {
+  apply(
+    json: Record<string, any>,
+    applyConfig?: ApplyJsonHashConfig,
+  ): Record<string, any> {
     applyConfig = applyConfig ?? ApplyJsonHashConfig.default;
     const copy = applyConfig.inPlace ? json : JsonHash._copyJson(json);
     this._addHashesToObject(copy, applyConfig);
@@ -141,7 +145,7 @@ export class JsonHash {
    * @param {string} jsonString - The JSON string to hash.
    * @returns {string} The JSON string with hashes added.
    */
-  applyToJsonString(jsonString) {
+  applyToJsonString(jsonString: string): string {
     const json = JSON.parse(jsonString);
     const applyConfig = ApplyJsonHashConfig.default;
     applyConfig.inPlace = true;
@@ -155,13 +159,13 @@ export class JsonHash {
    * @param {string} string - The string to hash.
    * @returns {string} The calculated hash.
    */
-  calcHash(string) {
+  calcHash(string: string): string {
     const hash = sha256.arrayBuffer(string);
     const bytes = new Uint8Array(hash);
     const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
 
-    // convert to url save base64
-    return base64.replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
+    // convert to url safe base64
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
   // ...........................................................................
@@ -169,7 +173,7 @@ export class JsonHash {
    * Throws if hashes are not correct.
    * @param {Record<string, any>} json - The JSON object to validate.
    */
-  validate(json) {
+  validate(json: Record<string, any>): void {
     // Check the hash of the high level element
     const ac = ApplyJsonHashConfig.default;
     ac.throwIfOnWrongHashes = false;
@@ -188,7 +192,11 @@ export class JsonHash {
    * @param {Record<string, any>} jsonShould - The JSON object with correct hashes.
    * @param {string} path - The current path in the JSON object.
    */
-  _validate(jsonIs, jsonShould, path) {
+  private _validate(
+    jsonIs: Record<string, any>,
+    jsonShould: Record<string, any>,
+    path: string,
+  ): void {
     // Check the hashes of the parent element
     const expectedHash = jsonShould['_hash'];
     const actualHash = jsonIs['_hash'];
@@ -230,7 +238,10 @@ export class JsonHash {
    * @param {Record<string, any>} obj - The object to add hashes to.
    * @param {ApplyJsonHashConfig} applyConfig - Whether to process recursively.
    */
-  _addHashesToObject(obj, applyConfig) {
+  private _addHashesToObject(
+    obj: Record<string, any>,
+    applyConfig: ApplyJsonHashConfig,
+  ): void {
     const updateExisting = applyConfig.updateExistingHashes;
     const throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
 
@@ -254,7 +265,7 @@ export class JsonHash {
 
     // Build a new object to represent the current object for hashing
     /** @type {Record<string, any>} */
-    const objToHash = {};
+    const objToHash: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(obj)) {
       if (key === '_hash') continue;
@@ -272,7 +283,7 @@ export class JsonHash {
     const sortedKeys = Object.keys(objToHash).sort();
 
     /** @type {Record<string, any>} */
-    const sortedMap = {};
+    const sortedMap: Record<string, any> = {};
     for (const key of sortedKeys) {
       sortedMap[key] = objToHash[key];
     }
@@ -297,13 +308,7 @@ export class JsonHash {
     obj['_hash'] = hash;
   }
 
-  // ...........................................................................
-  /**
-   * Converts a basic type to a suitable representation.
-   * @param {any} value - The value to convert.
-   * @returns {any} The converted value.
-   */
-  _convertBasicType(value) {
+  public _convertBasicType(value: any): any {
     if (typeof value === 'string') {
       return value;
     }
@@ -323,8 +328,8 @@ export class JsonHash {
    * @param {Array<any>} list - The list to flatten.
    * @returns {Array<any>} The flattened list.
    */
-  _flattenList(list) {
-    const flattenedList = [];
+  private _flattenList(list: Array<any>): Array<any> {
+    const flattenedList: Array<any> = [];
 
     for (const element of list) {
       if (typeof element === 'object' && !Array.isArray(element)) {
@@ -345,7 +350,10 @@ export class JsonHash {
    * @param {Array<any>} list - The list to process.
    * @param {ApplyJsonHashConfig} applyConfig - Whether to process recursively.
    */
-  _processList(list, applyConfig) {
+  private _processList(
+    list: Array<any>,
+    applyConfig: ApplyJsonHashConfig,
+  ): void {
     for (const element of list) {
       if (typeof element === 'object' && !Array.isArray(element)) {
         this._addHashesToObject(element, applyConfig);
@@ -361,9 +369,9 @@ export class JsonHash {
    * @param {Record<string, any>} json - The JSON object to copy.
    * @returns {Record<string, any>} The copied JSON object.
    */
-  static _copyJson(json) {
+  static _copyJson(json: Record<string, any>): Record<string, any> {
     /** @type {Record<string, any>} */
-    const copy = {};
+    const copy: Record<string, any> = {};
     for (const [key, value] of Object.entries(json)) {
       if (Array.isArray(value)) {
         copy[key] = JsonHash._copyList(value);
@@ -384,8 +392,8 @@ export class JsonHash {
    * @param {Array<any>} list - The list to copy.
    * @returns {Array<any>} The copied list.
    */
-  static _copyList(list) {
-    const copy = [];
+  static _copyList(list: Array<any>): Array<any> {
+    const copy: Array<any> = [];
     for (const element of list) {
       if (Array.isArray(element)) {
         copy.push(JsonHash._copyList(element));
@@ -406,7 +414,7 @@ export class JsonHash {
    * @param {any} value - The value to check.
    * @returns {boolean} True if the value is a basic type, false otherwise.
    */
-  static _isBasicType(value) {
+  static _isBasicType(value: any): boolean {
     return (
       typeof value === 'string' ||
       typeof value === 'number' ||
@@ -419,13 +427,13 @@ export class JsonHash {
    * Turns a number into a string with a given precision.
    * @param {number} value - The number to check.
    */
-  _checkNumber(value) {
+  private _checkNumber(value: number): void {
     if (isNaN(value)) {
       throw new Error('NaN is not supported.');
     }
 
     if (Number.isInteger(value)) {
-      return value;
+      return;
     }
 
     if (this._exceedsPrecision(value)) {
@@ -437,7 +445,9 @@ export class JsonHash {
     }
 
     if (this._exceedsLowerRange(value)) {
-      throw new Error(`Number ${value} is smaller NumberHashingConfig.minNum.`);
+      throw new Error(
+        `Number ${value} is smaller than NumberHashingConfig.minNum.`,
+      );
     }
   }
 
@@ -447,7 +457,7 @@ export class JsonHash {
    * @param {number} value - The number to check.
    * @returns {boolean} True if the number exceeds the given range, false otherwise.
    */
-  _exceedsUpperRange(value) {
+  private _exceedsUpperRange(value: number): boolean {
     return value > this.config.numberConfig.maxNum;
   }
 
@@ -457,7 +467,7 @@ export class JsonHash {
    * @param {number} value - The number to check.
    * @returns {boolean} True if the number exceeds the given range, false otherwise.
    */
-  _exceedsLowerRange(value) {
+  private _exceedsLowerRange(value: number): boolean {
     return value < this.config.numberConfig.minNum;
   }
 
@@ -467,7 +477,7 @@ export class JsonHash {
    * @param {number} value - The number to check.
    * @returns {boolean} True if the number exceeds the precision, false otherwise.
    */
-  _exceedsPrecision(value) {
+  private _exceedsPrecision(value: number): boolean {
     const precision = this.config.numberConfig.precision;
     const roundedValue = Math.round(value / precision) * precision;
     return Math.abs(value - roundedValue) > Number.EPSILON;
@@ -479,13 +489,13 @@ export class JsonHash {
    * @param {Record<string, any>} map - The map to convert.
    * @returns {string} The JSON string representation of the map.
    */
-  static _jsonString(map) {
+  static _jsonString(map: Record<string, any>): string {
     /**
      * Encodes a value to a JSON string.
      * @param {any} value - The map to convert.
      * @returns {string} The JSON string representation of the map.
      */
-    const encodeValue = (value) => {
+    const encodeValue = (value: any): string => {
       if (typeof value === 'string') {
         return `"${value.replace(/"/g, '\\"')}"`; // Escape quotes
       } else if (typeof value === 'number' || typeof value === 'boolean') {

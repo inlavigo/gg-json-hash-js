@@ -1,35 +1,47 @@
 {
   "name": "gg-json-hash",
-  "version": "2.1.5",
-  "main": "dist/gg-json-hash.js",
-  "types": "dist/gg-json-hash.d.ts",
-  "scripts": {
-    "test": "vitest --run --coverage",
-    "test:watch": "vitest --watch"
-  },
-  "type": "module",
-  "keywords": [],
-  "author": "Dr. Gabriel Gatzsche",
-  "license": "MIT",
+  "version": "2.1.6",
   "description": "Add hashes to nested json objects.",
+  "license": "MIT",
+  "author": "Dr. Gabriel Gatzsche",
+  "main": "dist/gg-json-hash.js",
+  "module": "dist/gg-json-hash.es.js",
+  "umd": "dist/gg-json-hash.umd.js",
+  "cjs": "dist/gg-json-hash.cjs.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist",
+    "example/src",
+    "example/package.json",
+    "example/tsconfig.json",
+    "example/README.md"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "vite build && tsc",
+    "prepare": "npm run build",
+    "test": "npx vitest run --coverage"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/inlavigo/gg-json-hash-js.git"
+    "url": "git+https://github.com/inlavigo/gg-json-hash-js.git"
   },
+  "keywords": [
+    "gg",
+    "json",
+    "relational",
+    "database"
+  ],
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "@types/node": "^22.10.1",
-    "@vitest/coverage-istanbul": "^2.1.6",
-    "@vitest/coverage-v8": "^2.1.6",
-    "eslint": "^9.15.0",
-    "eslint-plugin-jsdoc": "^50.6.0",
-    "globals": "^15.12.0",
-    "jsdom": "^25.0.1",
-    "prettier": "^3.4.1",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.16.0",
-    "vite-plugin-eslint": "^1.8.1",
-    "vitest": "^2.1.6"
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.8",
+    "vitest-dom": "^0.1.1",
+    "vitest-fetch-mock": "^0.4.3"
   },
   "dependencies": {
     "base64-js": "^1.5.1",

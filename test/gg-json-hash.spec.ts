@@ -5,7 +5,8 @@
 // found in the LICENSE file in the root of this package.
 
 import { beforeEach, expect, suite, test } from 'vitest';
-import { ApplyJsonHashConfig, JsonHash } from './gg-json-hash';
+
+import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash';
 
 suite('JsonHash', () => {
   let jh = JsonHash.default;
@@ -81,11 +82,9 @@ suite('JsonHash', () => {
             c: true,
           };
 
-          /** @type Record<String, any> */
-          let j0;
+          let j0: Record<string, any>;
 
-          /** @type Record<String, any> */
-          let j1;
+          let j1: Record<string, any>;
 
           beforeEach(() => {
             j0 = jh.apply(json0);
@@ -288,7 +287,7 @@ suite('JsonHash', () => {
       suite(
         'when ApplyJsonHashConfig.updateExistingHashes is set to true',
         () => {
-          const allHashesChanged = (/**@type{Record<string, any>}**/ json) => {
+          const allHashesChanged = (json: Record<string, any>) => {
             return (
               json['a']['_hash'] !== 'hash_a' &&
               json['a']['b']['_hash'] !== 'hash_b' &&
@@ -328,17 +327,16 @@ suite('JsonHash', () => {
         () => {
           const noHashesChanged = () => {
             return (
-              json['a']['_hash'] === 'hash_a' &&
-              json['a']['b']['_hash'] === 'hash_b' &&
-              json['a']['b']['c']['_hash'] === 'hash_c'
+              json.a._hash === 'hash_a' &&
+              json.a.b._hash === 'hash_b' &&
+              json.a.b.c._hash === 'hash_c'
             );
           };
 
           const ac = new ApplyJsonHashConfig();
           ac.inPlace = true;
 
-          /** @type Record<string, any> */
-          let json = {};
+          let json: Record<string, any> = {};
 
           beforeEach(() => {
             json = {
@@ -402,7 +400,7 @@ suite('JsonHash', () => {
           jh.apply({
             key: NaN,
           });
-        } catch (/** @type any */ e) {
+        } catch (e: any) {
           message = e.toString();
         }
 
@@ -416,7 +414,7 @@ suite('JsonHash', () => {
           jh.apply({
             key: new Error(),
           });
-        } catch (/** @type any */ e) {
+        } catch (e: any) {
           message = e.toString();
         }
 
@@ -478,7 +476,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: 1.0001,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -496,7 +494,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: 1.1234,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -514,7 +512,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: -1.0001,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -532,7 +530,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: -1.1234,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -550,7 +548,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: 9839089403.1235,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -568,7 +566,7 @@ suite('JsonHash', () => {
                   jh.apply({
                     key: 0.1e-4,
                   });
-                } catch (/** @type any */ e) {
+                } catch (e: any) {
                   message = e.toString();
                 }
 
@@ -589,17 +587,13 @@ suite('JsonHash', () => {
             max = jh.config.numberConfig.maxNum;
           });
 
-          /**
-           * @param {number} val
-           * @returns {void}
-           */
-          function check(val) {
+          function check(val: number) {
             let message = '';
             val = parseFloat(val.toFixed(3));
 
             try {
               jh.apply({ key: val });
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -621,21 +615,21 @@ suite('JsonHash', () => {
           });
 
           /**
-           * @param {number} val
+           * val: number
            * @returns {void}
            */
-          function check(val) {
+          function check(val: number) {
             let message = '';
             val = parseFloat(val.toFixed(3));
 
             try {
               jh.apply({ key: val });
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
             expect(message).toEqual(
-              `Error: Number ${val} is smaller NumberHashingConfig.minNum.`,
+              `Error: Number ${val} is smaller than NumberHashingConfig.minNum.`,
             );
           }
 
@@ -664,7 +658,7 @@ suite('JsonHash', () => {
               let message = '';
               try {
                 jh.apply(json, ac);
-              } catch (/** @type any */ e) {
+              } catch (e: any) {
                 message = e.toString();
               }
 
@@ -768,7 +762,7 @@ suite('JsonHash', () => {
               copyJson({
                 a: new Error(),
               });
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -781,7 +775,7 @@ suite('JsonHash', () => {
               copyJson({
                 a: [new Error()],
               });
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -830,7 +824,7 @@ suite('JsonHash', () => {
         let message;
         try {
           jsonString({ a: new Error() });
-        } catch (/** @type any */ e) {
+        } catch (e: any) {
           message = e.toString();
         }
 
@@ -855,7 +849,7 @@ suite('JsonHash', () => {
         let message = '';
         try {
           jh._convertBasicType(new Set());
-        } catch (/** @type any */ e) {
+        } catch (e: any) {
           message = e.toString();
         }
 
@@ -872,7 +866,7 @@ suite('JsonHash', () => {
 
           try {
             jh.validate({});
-          } catch (/** @type any */ e) {
+          } catch (e: any) {
             message = e.toString();
           }
 
@@ -886,7 +880,7 @@ suite('JsonHash', () => {
             jh.validate({
               _hash: 'wrongHash',
             });
-          } catch (/** @type any */ e) {
+          } catch (e: any) {
             message = e.toString();
           }
 
@@ -914,7 +908,7 @@ suite('JsonHash', () => {
 
           try {
             jh.validate({ key: 'value' });
-          } catch (/** @type any */ e) {
+          } catch (e: any) {
             message = e.toString();
           }
 
@@ -929,7 +923,7 @@ suite('JsonHash', () => {
               key: 'value',
               _hash: 'wrongHash',
             });
-          } catch (/** @type any */ e) {
+          } catch (e: any) {
             message = e.toString();
           }
 
@@ -976,7 +970,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -989,7 +983,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -1002,7 +996,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -1017,7 +1011,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -1032,7 +1026,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -1047,7 +1041,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
@@ -1089,7 +1083,7 @@ suite('JsonHash', () => {
 
             try {
               jh.validate(json2);
-            } catch (/** @type any */ e) {
+            } catch (e: any) {
               message = e.toString();
             }
 
