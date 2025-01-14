@@ -4,8 +4,6 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
-import { readFile } from 'fs/promises';
-import { join } from 'path';
 import { beforeEach, expect, suite, test } from 'vitest';
 
 import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash';
@@ -356,7 +354,7 @@ suite('JsonHash', () => {
           });
 
           const changedHashes = () => {
-            const result = [];
+            const result: string[] = [];
             if (json['a']['_hash'] !== 'hash_a') {
               result.push('a');
             }
@@ -1149,18 +1147,15 @@ suite('JsonHash', () => {
     });
 
     suite('special cases', () => {
-      test('a big list of strings', async () => {
-        const filePath = join(__dirname, 'broken-hashes-bug.rl.json');
-        const fileContent = await readFile(filePath, 'utf8');
-        const json = JSON.parse(fileContent);
-        let messsage = '';
-        try {
-          jh.validate(json);
-        } catch (e: any) {
-          messsage = e.toString();
-        }
-        // Error: Hash "PectUAoMgtAgjwsZBRYOkx" is wrong. Should be "NlMJLY4kS1ugEeAI6RrmL3".
-        expect(messsage).toBe('');
+      test('dictionaries with numbers as key', async () => {
+        const json = {
+          '1270537611': 'mxK7Q1zeVB1httPrYsn0ow',
+          '522965': 'PAue6PJ83JBmIqoElcDmot',
+        };
+
+        jh.apply(json, new ApplyJsonHashConfig(true, true, false));
+
+        expect(json['_hash']).toBe('W4CAuZT_tIicr6crbn6LA8');
       });
     });
   });

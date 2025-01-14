@@ -264,7 +264,6 @@ export class JsonHash {
     }
 
     // Build a new object to represent the current object for hashing
-    /** @type {Record<string, any>} */
     const objToHash: Record<string, any> = {};
 
     for (const [key, value] of Object.entries(obj)) {
@@ -279,16 +278,7 @@ export class JsonHash {
       }
     }
 
-    // Sort the object keys to ensure consistent key order
-    const sortedKeys = Object.keys(objToHash).sort();
-
-    /** @type {Record<string, any>} */
-    const sortedMap: Record<string, any> = {};
-    for (const key of sortedKeys) {
-      sortedMap[key] = objToHash[key];
-    }
-
-    const sortedMapJson = JsonHash._jsonString(sortedMap);
+    const sortedMapJson = JsonHash._jsonString(objToHash);
 
     // Compute the SHA-256 hash of the JSON string
     const hash = this.calcHash(sortedMapJson);
@@ -370,7 +360,6 @@ export class JsonHash {
    * @returns {Record<string, any>} The copied JSON object.
    */
   static _copyJson(json: Record<string, any>): Record<string, any> {
-    /** @type {Record<string, any>} */
     const copy: Record<string, any> = {};
     for (const [key, value] of Object.entries(json)) {
       if (Array.isArray(value)) {
@@ -490,11 +479,9 @@ export class JsonHash {
    * @returns {string} The JSON string representation of the map.
    */
   static _jsonString(map: Record<string, any>): string {
-    /**
-     * Encodes a value to a JSON string.
-     * @param {any} value - The map to convert.
-     * @returns {string} The JSON string representation of the map.
-     */
+    // Sort the object keys to ensure consistent key order
+    const sortedKeys = Object.keys(map).sort();
+
     const encodeValue = (value: any): string => {
       if (typeof value === 'string') {
         return `"${value.replace(/"/g, '\\"')}"`; // Escape quotes
@@ -509,8 +496,16 @@ export class JsonHash {
       }
     };
 
-    return `{${Object.entries(map)
-      .map(([key, value]) => `"${key}":${encodeValue(value)}`)
-      .join(',')}}`;
+    var result: string[] = [];
+    result.push('{');
+    for (var i = 0; i < sortedKeys.length; i++) {
+      const key = sortedKeys[i];
+      const isLast = i == sortedKeys.length - 1;
+      result.push(`"${key}":` + `${encodeValue(map[key])}`);
+      if (!isLast) result.push(',');
+    }
+    result.push('}');
+
+    return result.join('');
   }
 }
