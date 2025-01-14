@@ -4,6 +4,8 @@
 // Use of this source code is governed by terms that can be
 // found in the LICENSE file in the root of this package.
 
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 import { beforeEach, expect, suite, test } from 'vitest';
 
 import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash';
@@ -1143,6 +1145,22 @@ suite('JsonHash', () => {
             expect(() => jh.validate(json2)).not.toThrow();
           });
         });
+      });
+    });
+
+    suite('special cases', () => {
+      test('a big list of strings', async () => {
+        const filePath = join(__dirname, 'broken-hashes-bug.rl.json');
+        const fileContent = await readFile(filePath, 'utf8');
+        const json = JSON.parse(fileContent);
+        let messsage = '';
+        try {
+          jh.validate(json);
+        } catch (e: any) {
+          messsage = e.toString();
+        }
+        // Error: Hash "PectUAoMgtAgjwsZBRYOkx" is wrong. Should be "NlMJLY4kS1ugEeAI6RrmL3".
+        expect(messsage).toBe('');
       });
     });
   });
