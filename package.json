@@ -1,14 +1,11 @@
 {
   "name": "gg-json-hash",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "Add hashes to nested json objects.",
   "license": "MIT",
   "author": "Dr. Gabriel Gatzsche",
   "main": "dist/gg-json-hash.js",
-  "module": "dist/gg-json-hash.es.js",
-  "umd": "dist/gg-json-hash.umd.js",
-  "cjs": "dist/gg-json-hash.cjs.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
     "example/src",
@@ -20,7 +17,8 @@
   "scripts": {
     "build": "vite build && tsc",
     "prepare": "npm run build",
-    "test": "npx vitest run --coverage"
+    "test": "npx vitest run --coverage",
+    "prepublishOnly": "npm run build && npm run test"
   },
   "repository": {
     "type": "git",
@@ -41,9 +39,10 @@
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.8",
     "vitest-dom": "^0.1.1",
-    "vitest-fetch-mock": "^0.4.3"
+    "vitest-fetch-mock": "^0.4.3",
+    "vite-plugin-dts": "^4.5.0"
   },
-  "dependencies": {
+  "peerDependencies": {
     "base64-js": "^1.5.1",
     "js-sha256": "^0.11.0"
   }

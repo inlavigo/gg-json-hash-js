@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.1.8]
+
+- Generate proper type definitions.
+- Update vitest config
+
 ## [2.1.7]
 
 - Improve the algorithm to produce the same hashes as the dart implementation

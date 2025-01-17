@@ -9,4 +9,4 @@ export {
   HashConfig,
   JsonHash,
   NumberHashingConfig,
-} from './gg-json-hash';
+} from './gg-json-hash.ts';
