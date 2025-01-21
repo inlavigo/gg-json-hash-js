@@ -20,7 +20,7 @@ suite('JsonHash', () => {
       suite('simple json', () => {
         suite('containing only one key value pair', () => {
           test('with a string value', () => {
-            const json = jh.apply({ key: 'value' });
+            const json = jh.apply({ key: 'value', _hash: '' });
             expect(json.key).toEqual('value');
             const expectedHash = jh.calcHash('{"key":"value"}');
             expect(json._hash).toEqual(expectedHash);
@@ -28,7 +28,7 @@ suite('JsonHash', () => {
           });
 
           test('with a int value', () => {
-            const json = jh.apply({ key: 1 });
+            const json = jh.apply({ key: 1, _hash: '' });
             expect(json.key).toEqual(1);
             const expectedHash = jh.calcHash('{"key":1}');
             expect(json._hash).toEqual(expectedHash);
@@ -36,7 +36,7 @@ suite('JsonHash', () => {
           });
 
           test('with a double value without commas', () => {
-            const json = jh.apply({ key: 1.0 });
+            const json = jh.apply({ key: 1.0, _hash: '' });
             expect(json.key).toEqual(1);
             const expectedHash = jh.calcHash('{"key":1}');
             expect(json._hash).toEqual(expectedHash);
@@ -44,7 +44,7 @@ suite('JsonHash', () => {
           });
 
           test('with a bool value', () => {
-            const json = jh.apply({ key: true });
+            const json = jh.apply({ key: true, _hash: '' });
             expect(json.key).toEqual(true);
             const expectedHash = jh.calcHash('{"key":true}');
             expect(json._hash).toEqual(expectedHash);
@@ -110,8 +110,10 @@ suite('JsonHash', () => {
         test('of level 1', () => {
           const parent = jh.apply({
             key: 'value',
+            _hash: '',
             child: {
               key: 'value',
+              _hash: '',
             },
           });
 
@@ -128,10 +130,13 @@ suite('JsonHash', () => {
 
         test('of level 2', () => {
           const parent = jh.apply({
+            _hash: '',
             key: 'value',
             child: {
+              _hash: '',
               key: 'value',
               grandChild: {
+                _hash: '',
                 key: 'value',
               },
             },
@@ -168,6 +173,7 @@ suite('JsonHash', () => {
             test('should convert all values to strings and hash it', () => {
               const json = jh.apply({
                 key: ['value', 1.0, true],
+                _hash: '',
               });
 
               const expectedHash = jh.calcHash('{"key":["value",1,true]}');
@@ -182,6 +188,7 @@ suite('JsonHash', () => {
               suite('and use the hash instead of the stringified value', () => {
                 test('with a complicated array', () => {
                   const json = jh.apply({
+                    _hash: '',
                     array: [
                       'key',
                       1.0,
@@ -203,7 +210,8 @@ suite('JsonHash', () => {
 
                 test('with a simple array', () => {
                   const json = jh.apply({
-                    array: [{ key: 'value' }],
+                    _hash: '',
+                    array: [{ key: 'value', _hash: '' }],
                   });
 
                   const itemHash = jh.calcHash('{"key":"value"}');
@@ -224,6 +232,7 @@ suite('JsonHash', () => {
           suite('containing nested arrays', () => {
             test('should hash the nested arrays', () => {
               const json = jh.apply({
+                _hash: '',
                 array: [['key', 1.0, true], 'hello'],
               });
 
@@ -372,6 +381,7 @@ suite('JsonHash', () => {
 
           test('with all objects having hashes', () => {
             ac.updateExistingHashes = false;
+            ac.throwIfOnWrongHashes = false;
             jh.apply(json, ac);
             expect(noHashesChanged()).toBe(true);
           });
@@ -379,6 +389,7 @@ suite('JsonHash', () => {
           test('with parents have no hashes', () => {
             delete json['a']['_hash'];
             ac.updateExistingHashes = false;
+            ac.throwIfOnWrongHashes = false;
             jh.apply(json, ac);
             expect(changedHashes()).toEqual(['a']);
 
@@ -688,6 +699,56 @@ suite('JsonHash', () => {
             });
           },
         );
+      },
+    );
+  });
+
+  suite('applyInPlace()json', () => {
+    suite('default', () => {
+      test('replaces empty hashes with the correct ones', () => {
+        const json = {
+          key: 'value',
+          _hash: '',
+        };
+
+        jh.applyInPlace(json);
+        expect(json._hash).toEqual('5Dq88zdSRIOcAS-WM_lYYt');
+      });
+
+      test('throws when existing hashes are wrong', () => {
+        const json = {
+          key: 'value',
+          _hash: 'wrongHash',
+        };
+
+        let message = '';
+        try {
+          jh.applyInPlace(json);
+        } catch (e: any) {
+          message = e.toString();
+        }
+
+        expect(message).toEqual(
+          'Error: Hash "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
+        );
+      });
+    });
+
+    suite(
+      'with updateExistingHashes set to true and throwOnWrongHashes set to false',
+      () => {
+        const updateExistingHashes = true;
+        const throwOnWrongHashes = true;
+
+        test('overwrites existing hashes', () => {
+          const json = {
+            key: 'value',
+            _hash: 'wrongHash',
+          };
+
+          jh.applyInPlace(json, updateExistingHashes, !throwOnWrongHashes);
+          expect(json._hash).toEqual('5Dq88zdSRIOcAS-WM_lYYt');
+        });
       },
     );
   });

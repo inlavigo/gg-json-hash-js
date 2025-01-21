@@ -1,6 +1,6 @@
 {
   "name": "gg-json-hash",
-  "version": "2.1.8",
+  "version": "3.0.0",
   "description": "Add hashes to nested json objects.",
   "license": "MIT",
   "author": "Dr. Gabriel Gatzsche",
@@ -31,7 +31,6 @@
     "database"
   ],
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^2.1.8",
     "typescript": "~5.6.2",

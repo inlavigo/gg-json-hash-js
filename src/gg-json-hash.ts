@@ -129,14 +129,33 @@ export class JsonHash {
    * @param {ApplyJsonHashConfig} [applyConfig=HashApplyToConfig.default] - Options for the operation.
    * @returns {Record<string, any>} The JSON object with hashes added.
    */
-  apply(
-    json: Record<string, any>,
+  apply<T extends Record<string, any>>(
+    json: T,
     applyConfig?: ApplyJsonHashConfig,
-  ): Record<string, any> {
+  ): T {
     applyConfig = applyConfig ?? ApplyJsonHashConfig.default;
     const copy = applyConfig.inPlace ? json : JsonHash._copyJson(json);
     this._addHashesToObject(copy, applyConfig);
-    return copy;
+
+    if (applyConfig.throwIfOnWrongHashes) {
+      this.validate(copy);
+    }
+    return copy as T;
+  }
+
+  // ...........................................................................
+  applyInPlace<T extends Record<string, any>>(
+    json: T,
+    updateExistingHashes: boolean = false,
+    throwIfWrongHashes: boolean = true,
+  ): T {
+    const applyConfig = new ApplyJsonHashConfig(
+      true,
+      updateExistingHashes,
+      throwIfWrongHashes,
+    );
+
+    return this.apply(json, applyConfig) as T;
   }
 
   // ...........................................................................
@@ -245,7 +264,8 @@ export class JsonHash {
     const updateExisting = applyConfig.updateExistingHashes;
     const throwIfOnWrongHashes = applyConfig.throwIfOnWrongHashes;
 
-    if (!updateExisting && Object.prototype.hasOwnProperty.call(obj, '_hash')) {
+    const existingHash = obj['_hash'];
+    if (!updateExisting && existingHash) {
       return;
     }
 
@@ -509,3 +529,8 @@ export class JsonHash {
     return result.join('');
   }
 }
+
+/**
+ * A shortcut to a default instance
+ */
+export const jh = JsonHash.default;

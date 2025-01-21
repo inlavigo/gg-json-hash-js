@@ -7,6 +7,7 @@
 export {
   ApplyJsonHashConfig,
   HashConfig,
+  jh,
   JsonHash,
   NumberHashingConfig,
 } from './gg-json-hash.ts';

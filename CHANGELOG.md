@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0]
+
+- Add `applyInPlace` to quickly write hashes into objects
+- `JsonHash.apply` returns the same type it is applied to.
+  - Type does not get lost by applying hash.
+- Add `jh` as a shortcut to `JsonHash.default`.
+- BREAKING CHANGE:
+  - `apply` return the same type they getting in.
+    - If the type did not have a `_hash` field, static type checking will fail.
+
 ## [2.1.8]
 
 - Generate proper type definitions.
