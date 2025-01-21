@@ -1,6 +1,6 @@
 {
   "name": "gg-json-hash",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Add hashes to nested json objects.",
   "license": "MIT",
   "author": "Dr. Gabriel Gatzsche",
@@ -31,10 +31,9 @@
     "database"
   ],
   "devDependencies": {
-    "@types/node": "^22.10.2",
     "@vitest/coverage-v8": "^2.1.8",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3",
+    "vite": "^6.0.10",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.8",
     "vitest-dom": "^0.1.1",

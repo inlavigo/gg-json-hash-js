@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.1]
+
+- Build with vite 6.0.10
+
 ## [3.0.0]
 
 - Add `applyInPlace` to quickly write hashes into objects
