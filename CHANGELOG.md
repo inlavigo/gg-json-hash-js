@@ -3,6 +3,7 @@
 ## [3.0.1]
 
 - Build with vite 6.0.10
+- `validate` returns the original object to be used in instantiation
 
 ## [3.0.0]
 

@@ -1,6 +1,7 @@
 import { fromByteArray } from 'base64-js';
 import { sha256 } from 'js-sha256';
 
+
 // .............................................................................
 /**
  * Number config for hashing.
@@ -192,12 +193,13 @@ export class JsonHash {
    * Throws if hashes are not correct.
    * @param {Record<string, any>} json - The JSON object to validate.
    */
-  validate(json: Record<string, any>): void {
+  validate<T extends Record<string, any>>(json: T): T {
     // Check the hash of the high level element
     const ac = ApplyJsonHashConfig.default;
     ac.throwIfOnWrongHashes = false;
     const jsonWithCorrectHashes = this.apply(json, ac);
     this._validate(json, jsonWithCorrectHashes, '');
+    return json;
   }
 
   // ######################

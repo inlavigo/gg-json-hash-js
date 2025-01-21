@@ -8,6 +8,7 @@ import { beforeEach, expect, suite, test } from 'vitest';
 
 import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash';
 
+
 suite('JsonHash', () => {
   let jh = JsonHash.default;
 
@@ -958,6 +959,16 @@ suite('JsonHash', () => {
               _hash: 'RBNvo1WzZ4oRRq0W9-hknp',
             }),
           ).not.toThrow();
+        });
+
+        test('returns the valid object unchanged', () => {
+          const json = {
+            key: 'value',
+            _hash: '5Dq88zdSRIOcAS-WM_lYYt',
+          };
+
+          const jsonOut = jh.validate(json);
+          expect(jsonOut).toBe(json);
         });
       });
     });
