@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.2.0]
+
+- Treat empty `_hash` as no hashes. Fill them.
+
+## [3.1.0]
+
+- Use `calcHash()` also hashes for arrays, records or strings
+
 ## [3.0.2]
 
 - Build with vite 6.0.10

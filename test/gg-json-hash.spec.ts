@@ -8,7 +8,6 @@ import { beforeEach, expect, suite, test } from 'vitest';
 
 import { ApplyJsonHashConfig, JsonHash } from '../src/gg-json-hash';
 
-
 suite('JsonHash', () => {
   let jh = JsonHash.default;
 
@@ -733,6 +732,35 @@ suite('JsonHash', () => {
           'Error: Hash "wrongHash" is wrong. Should be "5Dq88zdSRIOcAS-WM_lYYt".',
         );
       });
+
+      suite('special cases', () => {
+        test('with a simple json', () => {
+          jh.applyInPlace({
+            name: 'Set width of UE to 1111',
+            filter: {
+              columnFilters: [
+                {
+                  type: 'string',
+                  column: 'articleType',
+                  operator: 'startsWith',
+                  search: 'UE',
+                  _hash: '',
+                },
+              ],
+              operator: 'and',
+              _hash: '',
+            },
+            actions: [
+              {
+                column: 'w',
+                setValue: 1111,
+                _hash: '',
+              },
+            ],
+            _hash: '',
+          });
+        });
+      });
     });
 
     suite(
@@ -752,6 +780,27 @@ suite('JsonHash', () => {
         });
       },
     );
+  });
+
+  suite('calcHash', () => {
+    test('with strings', () => {
+      const hash = jh.calcHash('{"key":"value"}');
+      expect(hash).toEqual('5Dq88zdSRIOcAS-WM_lYYt');
+    });
+
+    test('with arrays', () => {
+      const array = [1, 2, 'value'];
+      const hash = jh.calcHash(array);
+      const hash2 = jh.apply({ array: array, _hash: '' })._hash;
+      expect(hash).toEqual(hash2);
+    });
+
+    test('with maps', () => {
+      const map = { key: 'value', _hash: '' };
+      const hash = jh.calcHash(map);
+      const hash2 = jh.apply(map)._hash;
+      expect(hash).toEqual(hash2);
+    });
   });
 
   suite('applyToJsonString(string)', () => {

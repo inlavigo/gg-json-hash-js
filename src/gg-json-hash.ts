@@ -1,7 +1,6 @@
 import { fromByteArray } from 'base64-js';
 import { sha256 } from 'js-sha256';
 
-
 // .............................................................................
 /**
  * Number config for hashing.
@@ -176,16 +175,17 @@ export class JsonHash {
   // ...........................................................................
   /**
    * Calculates a SHA-256 hash of a string with base64 url.
-   * @param {string} string - The string to hash.
+   * @param {string} value - The string to hash.
    * @returns {string} The calculated hash.
    */
-  calcHash(string: string): string {
-    const hash = sha256.arrayBuffer(string);
-    const bytes = new Uint8Array(hash);
-    const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
-
-    // convert to url safe base64
-    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  calcHash(value: string | Array<any> | Record<string, any>): string {
+    if (typeof value === 'string') {
+      return this._calcStringHash(value);
+    } else if (Array.isArray(value)) {
+      return this._calcArrayHash(value);
+    } else {
+      return this.apply(value)._hash;
+    }
   }
 
   // ...........................................................................
@@ -254,6 +254,23 @@ export class JsonHash {
   }
 
   // ...........................................................................
+  _calcStringHash(string: string): string {
+    const hash = sha256.arrayBuffer(string);
+    const bytes = new Uint8Array(hash);
+    const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
+
+    // convert to url safe base64
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+
+  // ...........................................................................
+  _calcArrayHash(array: Array<any>): string {
+    const object = { array: array, _hash: '' };
+    this.applyInPlace(object);
+    return object._hash;
+  }
+
+  // ...........................................................................
   /**
    * Recursively adds hashes to a nested object.
    * @param {Record<string, any>} obj - The object to add hashes to.
@@ -275,7 +292,7 @@ export class JsonHash {
     for (const [, value] of Object.entries(obj)) {
       if (typeof value === 'object' && !Array.isArray(value)) {
         const existingHash = value['_hash'];
-        if (existingHash != null && !updateExisting) {
+        if (existingHash && !updateExisting) {
           continue;
         }
 
