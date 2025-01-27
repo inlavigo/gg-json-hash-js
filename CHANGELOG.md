@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.2.1]
+
+- Objects to be hashed can contain null
+
 ## [3.2.0]
 
 - Treat empty `_hash` as no hashes. Fill them.

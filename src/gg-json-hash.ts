@@ -237,7 +237,11 @@ export class JsonHash {
     // Check the hashes of the child elements
     for (const [key, value] of Object.entries(jsonIs)) {
       if (key === '_hash') continue;
-      if (typeof value === 'object' && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
         const childIs = value;
         const childShould = jsonShould[key];
         this._validate(childIs, childShould, `${path}/${key}`);
@@ -245,6 +249,9 @@ export class JsonHash {
         for (let i = 0; i < value.length; i++) {
           if (typeof value[i] === 'object' && !Array.isArray(value[i])) {
             const itemIs = value[i];
+            if (itemIs == null) {
+              continue;
+            }
             const itemShould = jsonShould[key][i];
             this._validate(itemIs, itemShould, `${path}/${key}/${i}`);
           }
@@ -290,7 +297,11 @@ export class JsonHash {
 
     // Recursively process child elements
     for (const [, value] of Object.entries(obj)) {
-      if (typeof value === 'object' && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value)
+      ) {
         const existingHash = value['_hash'];
         if (existingHash && !updateExisting) {
           continue;
@@ -307,8 +318,9 @@ export class JsonHash {
 
     for (const [key, value] of Object.entries(obj)) {
       if (key === '_hash') continue;
-
-      if (typeof value === 'object' && !Array.isArray(value)) {
+      if (value === null) {
+        objToHash[key] = null;
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
         objToHash[key] = value['_hash'];
       } else if (Array.isArray(value)) {
         objToHash[key] = this._flattenList(value);
@@ -361,7 +373,9 @@ export class JsonHash {
     const flattenedList: Array<any> = [];
 
     for (const element of list) {
-      if (typeof element === 'object' && !Array.isArray(element)) {
+      if (element == null) {
+        flattenedList.push(null);
+      } else if (typeof element === 'object' && !Array.isArray(element)) {
         flattenedList.push(element['_hash']);
       } else if (Array.isArray(element)) {
         flattenedList.push(this._flattenList(element));
@@ -384,7 +398,9 @@ export class JsonHash {
     applyConfig: ApplyJsonHashConfig,
   ): void {
     for (const element of list) {
-      if (typeof element === 'object' && !Array.isArray(element)) {
+      if (element === null) {
+        continue;
+      } else if (typeof element === 'object' && !Array.isArray(element)) {
         this._addHashesToObject(element, applyConfig);
       } else if (Array.isArray(element)) {
         this._processList(element, applyConfig);
@@ -401,7 +417,9 @@ export class JsonHash {
   static _copyJson(json: Record<string, any>): Record<string, any> {
     const copy: Record<string, any> = {};
     for (const [key, value] of Object.entries(json)) {
-      if (Array.isArray(value)) {
+      if (value === null) {
+        copy[key] = null;
+      } else if (Array.isArray(value)) {
         copy[key] = JsonHash._copyList(value);
       } else if (JsonHash._isBasicType(value)) {
         copy[key] = value;
@@ -423,7 +441,9 @@ export class JsonHash {
   static _copyList(list: Array<any>): Array<any> {
     const copy: Array<any> = [];
     for (const element of list) {
-      if (Array.isArray(element)) {
+      if (element == null) {
+        copy.push(null);
+      } else if (Array.isArray(element)) {
         copy.push(JsonHash._copyList(element));
       } else if (JsonHash._isBasicType(element)) {
         copy.push(element);
@@ -522,7 +542,9 @@ export class JsonHash {
     const sortedKeys = Object.keys(map).sort();
 
     const encodeValue = (value: any): string => {
-      if (typeof value === 'string') {
+      if (value == null) {
+        return 'null';
+      } else if (typeof value === 'string') {
         return `"${value.replace(/"/g, '\\"')}"`; // Escape quotes
       } else if (typeof value === 'number' || typeof value === 'boolean') {
         return value.toString();

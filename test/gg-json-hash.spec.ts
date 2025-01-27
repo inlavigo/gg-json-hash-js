@@ -50,6 +50,22 @@ suite('JsonHash', () => {
             expect(json._hash).toEqual(expectedHash);
             expect(json._hash).toEqual('dNkCrIe79x2dPyf5fywwYO');
           });
+
+          test('with a null value', () => {
+            const json = jh.apply({ key: null, _hash: '' });
+            expect(json.key).toEqual(null);
+            const expectedHash = jh.calcHash('{"key":null}');
+            expect(json._hash).toEqual(expectedHash);
+            expect(json._hash).toEqual('BZwS6bAVtKxSW0AW5y8ANk');
+          });
+
+          test('with an array with null values', () => {
+            const json = jh.apply({ key: [1, 2, null, 3], _hash: '' });
+            expect(json.key).toEqual([1, 2, null, 3]);
+            const expectedHash = jh.calcHash('{"key":[1,2,null,3]}');
+            expect(json._hash).toEqual(expectedHash);
+            expect(json._hash).toEqual('TJBZ_lVlkDw6WlF8esM0I5');
+          });
         });
 
         test('existing _hash should be overwritten', () => {
