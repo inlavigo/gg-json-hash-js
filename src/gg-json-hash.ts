@@ -202,6 +202,34 @@ export class JsonHash {
     return json;
   }
 
+  // ...........................................................................
+  /**
+   * Copies the JSON object.
+   */
+  static copyJson = JsonHash._copyJson;
+
+  /**
+   * Copies the list deeply
+   */
+  static copyList = JsonHash._copyList;
+
+  /**
+   * Returns the value when it is a basic type. Otherwise throws an error.
+   */
+  static isBasicType = JsonHash._isBasicType;
+
+  /**
+   * Converts a map to a JSON string.
+   * @param {Record<string, any>} map - The map to convert.
+   * @returns {string} The JSON string representation of the map.
+   */
+  static jsonString = JsonHash._jsonString;
+
+  /**
+   * Checks an basic type. Throws an error if the type is not supported.
+   */
+  checkBasicType = (value: any) => this._checkBasicType(value);
+
   // ######################
   // Private
   // ######################
@@ -261,7 +289,7 @@ export class JsonHash {
   }
 
   // ...........................................................................
-  _calcStringHash(string: string): string {
+  private _calcStringHash(string: string): string {
     const hash = sha256.arrayBuffer(string);
     const bytes = new Uint8Array(hash);
     const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
@@ -271,7 +299,7 @@ export class JsonHash {
   }
 
   // ...........................................................................
-  _calcArrayHash(array: Array<any>): string {
+  private _calcArrayHash(array: Array<any>): string {
     const object = { array: array, _hash: '' };
     this.applyInPlace(object);
     return object._hash;
@@ -325,7 +353,7 @@ export class JsonHash {
       } else if (Array.isArray(value)) {
         objToHash[key] = this._flattenList(value);
       } else if (JsonHash._isBasicType(value)) {
-        objToHash[key] = this._convertBasicType(value);
+        objToHash[key] = this._checkBasicType(value);
       }
     }
 
@@ -349,7 +377,7 @@ export class JsonHash {
     obj['_hash'] = hash;
   }
 
-  public _convertBasicType(value: any): any {
+  private _checkBasicType(value: any): any {
     if (typeof value === 'string') {
       return value;
     }
@@ -380,7 +408,7 @@ export class JsonHash {
       } else if (Array.isArray(element)) {
         flattenedList.push(this._flattenList(element));
       } else if (JsonHash._isBasicType(element)) {
-        flattenedList.push(this._convertBasicType(element));
+        flattenedList.push(this._checkBasicType(element));
       }
     }
 
@@ -414,7 +442,7 @@ export class JsonHash {
    * @param {Record<string, any>} json - The JSON object to copy.
    * @returns {Record<string, any>} The copied JSON object.
    */
-  static _copyJson(json: Record<string, any>): Record<string, any> {
+  private static _copyJson(json: Record<string, any>): Record<string, any> {
     const copy: Record<string, any> = {};
     for (const [key, value] of Object.entries(json)) {
       if (value === null) {
@@ -438,7 +466,7 @@ export class JsonHash {
    * @param {Array<any>} list - The list to copy.
    * @returns {Array<any>} The copied list.
    */
-  static _copyList(list: Array<any>): Array<any> {
+  private static _copyList(list: Array<any>): Array<any> {
     const copy: Array<any> = [];
     for (const element of list) {
       if (element == null) {
@@ -462,7 +490,7 @@ export class JsonHash {
    * @param {any} value - The value to check.
    * @returns {boolean} True if the value is a basic type, false otherwise.
    */
-  static _isBasicType(value: any): boolean {
+  private static _isBasicType(value: any): boolean {
     return (
       typeof value === 'string' ||
       typeof value === 'number' ||
@@ -537,7 +565,7 @@ export class JsonHash {
    * @param {Record<string, any>} map - The map to convert.
    * @returns {string} The JSON string representation of the map.
    */
-  static _jsonString(map: Record<string, any>): string {
+  private static _jsonString(map: Record<string, any>): string {
     // Sort the object keys to ensure consistent key order
     const sortedKeys = Object.keys(map).sort();
 

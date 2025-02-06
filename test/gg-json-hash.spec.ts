@@ -829,159 +829,157 @@ suite('JsonHash', () => {
     });
   });
 
-  suite('private methods', () => {
-    suite('_copyJson', () => {
-      const copyJson = JsonHash._copyJson;
+  suite('copyJson', () => {
+    const copyJson = JsonHash.copyJson;
 
-      test('empty json', () => {
-        expect(copyJson({})).toEqual({});
-      });
+    test('empty json', () => {
+      expect(copyJson({})).toEqual({});
+    });
 
-      test('simple value', () => {
-        expect(copyJson({ a: 1 })).toEqual({ a: 1 });
-      });
+    test('simple value', () => {
+      expect(copyJson({ a: 1 })).toEqual({ a: 1 });
+    });
 
-      test('nested value', () => {
-        expect(
-          copyJson({
-            a: { b: 1 },
-          }),
-        ).toEqual({
+    test('nested value', () => {
+      expect(
+        copyJson({
           a: { b: 1 },
-        });
+        }),
+      ).toEqual({
+        a: { b: 1 },
       });
+    });
 
-      test('list value', () => {
-        expect(
-          copyJson({
-            a: [1, 2],
-          }),
-        ).toEqual({
+    test('list value', () => {
+      expect(
+        copyJson({
           a: [1, 2],
-        });
+        }),
+      ).toEqual({
+        a: [1, 2],
       });
+    });
 
-      test('list with list', () => {
-        expect(
-          copyJson({
-            a: [[1, 2]],
-          }),
-        ).toEqual({
+    test('list with list', () => {
+      expect(
+        copyJson({
           a: [[1, 2]],
-        });
+        }),
+      ).toEqual({
+        a: [[1, 2]],
       });
+    });
 
-      test('list with map', () => {
-        expect(
-          copyJson({
-            a: [{ b: 1 }],
-          }),
-        ).toEqual({
+    test('list with map', () => {
+      expect(
+        copyJson({
           a: [{ b: 1 }],
+        }),
+      ).toEqual({
+        a: [{ b: 1 }],
+      });
+    });
+
+    suite('throws', () => {
+      suite('on unsupported type', () => {
+        test('in map', () => {
+          let message;
+          try {
+            copyJson({
+              a: new Error(),
+            });
+          } catch (e: any) {
+            message = e.toString();
+          }
+
+          expect(message).toEqual('Error: Unsupported type: object');
+        });
+
+        test('in list', () => {
+          let message;
+          try {
+            copyJson({
+              a: [new Error()],
+            });
+          } catch (e: any) {
+            message = e.toString();
+          }
+
+          expect(message).toEqual('Error: Unsupported type: object');
         });
       });
+    });
+  });
 
-      suite('throws', () => {
-        suite('on unsupported type', () => {
-          test('in map', () => {
-            let message;
-            try {
-              copyJson({
-                a: new Error(),
-              });
-            } catch (e: any) {
-              message = e.toString();
-            }
+  suite('isBasicType', () => {
+    const isBasicType = JsonHash.isBasicType;
 
-            expect(message).toEqual('Error: Unsupported type: object');
-          });
+    test('returns true if type is a basic type', () => {
+      expect(isBasicType(1)).toEqual(true);
+      expect(isBasicType(1.0)).toEqual(true);
+      expect(isBasicType('1')).toEqual(true);
+      expect(isBasicType(true)).toEqual(true);
+      expect(isBasicType(false)).toEqual(true);
+      expect(isBasicType(new Set())).toEqual(false);
+    });
+  });
 
-          test('in list', () => {
-            let message;
-            try {
-              copyJson({
-                a: [new Error()],
-              });
-            } catch (e: any) {
-              message = e.toString();
-            }
+  suite('jsonString(map)', () => {
+    const jsonString = JsonHash.jsonString;
 
-            expect(message).toEqual('Error: Unsupported type: object');
-          });
-        });
-      });
+    test('converts a map into a json string', () => {
+      expect(jsonString({ a: 1 })).toEqual('{"a":1}');
+      expect(jsonString({ a: 'b' })).toEqual('{"a":"b"}');
+      expect(jsonString({ a: true })).toEqual('{"a":true}');
+      expect(jsonString({ a: false })).toEqual('{"a":false}');
+      expect(jsonString({ a: 1.0 })).toEqual('{"a":1}');
+      expect(jsonString({ a: 1.0 })).toEqual('{"a":1}');
+      expect(
+        jsonString({
+          a: [1, 2],
+        }),
+      ).toEqual('{"a":[1,2]}');
+      expect(
+        jsonString({
+          a: { b: 1 },
+        }),
+      ).toEqual('{"a":{"b":1}}');
     });
 
-    suite('_isBasicType', () => {
-      const isBasicType = JsonHash._isBasicType;
+    test('throws when unsupported type', () => {
+      let message;
+      try {
+        jsonString({ a: new Error() });
+      } catch (e: any) {
+        message = e.toString();
+      }
 
-      test('returns true if type is a basic type', () => {
-        expect(isBasicType(1)).toEqual(true);
-        expect(isBasicType(1.0)).toEqual(true);
-        expect(isBasicType('1')).toEqual(true);
-        expect(isBasicType(true)).toEqual(true);
-        expect(isBasicType(false)).toEqual(true);
-        expect(isBasicType(new Set())).toEqual(false);
-      });
+      expect(message).toEqual('Error: Unsupported type: object');
+    });
+  });
+
+  suite('_checkBasicType(string)', () => {
+    test('with a string', () => {
+      expect(jh.checkBasicType('hello')).toEqual('hello');
     });
 
-    suite('_jsonString(map)', () => {
-      const jsonString = JsonHash._jsonString;
-
-      test('converts a map into a json string', () => {
-        expect(jsonString({ a: 1 })).toEqual('{"a":1}');
-        expect(jsonString({ a: 'b' })).toEqual('{"a":"b"}');
-        expect(jsonString({ a: true })).toEqual('{"a":true}');
-        expect(jsonString({ a: false })).toEqual('{"a":false}');
-        expect(jsonString({ a: 1.0 })).toEqual('{"a":1}');
-        expect(jsonString({ a: 1.0 })).toEqual('{"a":1}');
-        expect(
-          jsonString({
-            a: [1, 2],
-          }),
-        ).toEqual('{"a":[1,2]}');
-        expect(
-          jsonString({
-            a: { b: 1 },
-          }),
-        ).toEqual('{"a":{"b":1}}');
-      });
-
-      test('throws when unsupported type', () => {
-        let message;
-        try {
-          jsonString({ a: new Error() });
-        } catch (e: any) {
-          message = e.toString();
-        }
-
-        expect(message).toEqual('Error: Unsupported type: object');
-      });
+    test('with an int', () => {
+      expect(jh.checkBasicType(10)).toEqual(10);
     });
 
-    suite('_convertBasicType(string)', () => {
-      test('with a string', () => {
-        expect(jh._convertBasicType('hello')).toEqual('hello');
-      });
+    test('with a double', () => {
+      expect(jh.checkBasicType(true)).toEqual(true);
+    });
 
-      test('with an int', () => {
-        expect(jh._convertBasicType(10)).toEqual(10);
-      });
+    test('with an non basic type', () => {
+      let message = '';
+      try {
+        jh.checkBasicType(new Set());
+      } catch (e: any) {
+        message = e.toString();
+      }
 
-      test('with a double', () => {
-        expect(jh._convertBasicType(true)).toEqual(true);
-      });
-
-      test('with an non basic type', () => {
-        let message = '';
-        try {
-          jh._convertBasicType(new Set());
-        } catch (e: any) {
-          message = e.toString();
-        }
-
-        expect(message).toEqual('Error: Unsupported type: object');
-      });
+      expect(message).toEqual('Error: Unsupported type: object');
     });
   });
 

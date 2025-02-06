@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.3.0]
+
+- Add public method `JsonHash.copyJson` and some more.
+
 ## [3.2.1]
 
 - Objects to be hashed can contain null
