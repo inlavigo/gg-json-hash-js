@@ -22,7 +22,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['base64-js', '@aws-crypto/sha256-js'],
+      external: ['js-base64', '@aws-crypto/sha256-js'],
       output: {
         globals: {},
       },

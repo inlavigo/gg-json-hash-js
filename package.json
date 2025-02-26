@@ -1,6 +1,6 @@
 {
   "name": "gg-json-hash",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "Add hashes to nested json objects.",
   "license": "MIT",
   "author": "Dr. Gabriel Gatzsche",
@@ -40,7 +40,8 @@
     "vitest-dom": "^0.1.1"
   },
   "peerDependencies": {
-    "base64-js": "^1.5.1",
-    "@aws-crypto/sha256-js": "^5.2.0"
-  }
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "js-base64": "^3.7.7"
+  },
+  "dependencies": {}
 }
