@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.3.1]
+
+- Switch SHA-256 algorithm
+
 ## [3.3.0]
 
 - Add public method `JsonHash.copyJson` and some more.

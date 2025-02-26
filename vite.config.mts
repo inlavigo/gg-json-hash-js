@@ -9,7 +9,6 @@ import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
-
 export default defineConfig({
   plugins: [dts({ include: ['src/*'] })],
 
@@ -23,7 +22,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['base64-js', 'js-sha256'],
+      external: ['base64-js', '@aws-crypto/sha256-js'],
       output: {
         globals: {},
       },

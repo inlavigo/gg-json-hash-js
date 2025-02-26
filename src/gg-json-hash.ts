@@ -1,5 +1,6 @@
+import { Sha256 } from '@aws-crypto/sha256-js';
+
 import { fromByteArray } from 'base64-js';
-import { sha256 } from 'js-sha256';
 
 // .............................................................................
 /**
@@ -290,8 +291,9 @@ export class JsonHash {
 
   // ...........................................................................
   private _calcStringHash(string: string): string {
-    const hash = sha256.arrayBuffer(string);
-    const bytes = new Uint8Array(hash);
+    const hash = new Sha256();
+    hash.update(string);
+    const bytes = hash.digestSync();
     const base64 = fromByteArray(bytes).substring(0, this.config.hashLength);
 
     // convert to url safe base64
